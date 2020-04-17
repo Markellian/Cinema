@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,9 +17,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Drawing.Imaging;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
-using Image = System.Windows.Controls.Image;
+//using Image = System.Windows.Controls.Image;
 //пара номер 4
 namespace Cinema
 {
@@ -31,71 +34,87 @@ namespace Cinema
 
         RoleName role = new RoleName(); //для указаная роли для посетителей при регистрации
         Users user;
+        Films film;
+        List<GetPlaces_Result> ListPlacesToBuy = new List<GetPlaces_Result>();//места, выбранные для покупки
+        decimal price = 0;//цена 1 билета
+        decimal AmountTickets = 0;//цена всех выбранных билетов
+        List<Place> listPlaces;//места на сеансе
         public MainWindow()
         {
             InitializeComponent();
             LoadPosters();
+            using (var db = new CinemaEntities())
+            {
+                var k = from f in db.Films where f.Film_id == 1 select f;
+                foreach (var k1 in k) film = k1;
+            }
+            LoadSessions();
         }
         /// <summary>
         /// Загрузка постеров фильмов на главный экран
         /// </summary>
         private void LoadPosters()
         {
+            foreach (var p in PostersList)
+            {
+                PosterGrid.Children.Remove(p.Poster);
+            }
             PostersList = new List<PosterClass>();
             using (var db = new CinemaEntities())
             {
                 int i = -1;
-                foreach (var v in from f in db.Films select f)
+                var q = from f in db.Films select f;
+                foreach (var v in q)
                 {
-                    
-                        i++;
-                        Image image = new Image()
-                        {
-                            Width = 150,
-                            Height = 200,
-                            Source = byteArrayToImage(v.Poster),
-                            Margin = new Thickness(0, 0, 0, 0),
-                            HorizontalAlignment = HorizontalAlignment.Left,
-                            VerticalAlignment = VerticalAlignment.Top,
-                            Stretch = Stretch.Fill
-                        };
 
-                        TextBlock textBlock = new TextBlock()
-                        {
-                            Text = v.Film_name,
-                            FontSize = 20,
-                            Width = 150,
-                            HorizontalAlignment = HorizontalAlignment.Left,
-                            VerticalAlignment = VerticalAlignment.Top,
-                            Margin = new Thickness(0, 200, 0, 0),
-                            TextWrapping = TextWrapping.Wrap,
-                            TextAlignment = TextAlignment.Center
-                        };
+                    i++;
+                    System.Windows.Controls.Image image = new System.Windows.Controls.Image()
+                    {
+                        Width = 150,
+                        Height = 200,
+                        Source = byteArrayToImage(v.Poster),
+                        Margin = new Thickness(0, 0, 0, 0),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Stretch = Stretch.Fill
+                    };
 
-                        Grid grid = new Grid()
-                        {
-                            Width = 150,
-                            Height = 275,
-                            HorizontalAlignment = HorizontalAlignment.Left,
-                            VerticalAlignment = VerticalAlignment.Top,
-                            Margin = new Thickness(50 + 250 * (i % 3), 300 * (i / 3), 0, 0)                            
-                        };
-                        grid.MouseMove += Poster_MouseMove;
-                        grid.MouseLeave += Poster_MouseLeave;
-                        grid.MouseLeftButtonUp += Poster_MouseLeftButtonUp;
+                    TextBlock textBlock = new TextBlock()
+                    {
+                        Text = v.Film_name,
+                        FontSize = 20,
+                        Width = 150,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Margin = new Thickness(0, 200, 0, 0),
+                        TextWrapping = TextWrapping.Wrap,
+                        TextAlignment = TextAlignment.Center
+                    };
 
-                        grid.Children.Add(image);
-                        grid.Children.Add(textBlock);
-                        PosterGrid.Children.Add(grid);
-                        //PosterGrid.Children.Add(image);
-                        //PosterGrid.Children.Add(textBlock);
-                        PosterClass pp = new PosterClass();
-                        pp.film = v;
-                        pp.Poster = grid;
-                        PostersList.Add(pp);
-                    
+                    Grid grid = new Grid()
+                    {
+                        Width = 150,
+                        Height = 275,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Margin = new Thickness(50 + 250 * (i % 3), 300 * (i / 3), 0, 0)
+                    };
+                    grid.MouseMove += Poster_MouseMove;
+                    grid.MouseLeave += Poster_MouseLeave;
+                    grid.MouseLeftButtonUp += Poster_MouseLeftButtonUp;
+
+                    grid.Children.Add(image);
+                    grid.Children.Add(textBlock);
+                    PosterGrid.Children.Add(grid);
+                    //PosterGrid.Children.Add(image);
+                    //PosterGrid.Children.Add(textBlock);
+                    PosterClass pp = new PosterClass();
+                    pp.film = v;
+                    pp.Poster = grid;
+                    PostersList.Add(pp);
+
                 }
-            }            
+            }
         }
         /// <summary>
         /// На постер нажали правой кнопкой мыши
@@ -105,8 +124,8 @@ namespace Cinema
         private void Poster_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             PosterClass poster = new PosterClass();
-            Films film = new Films();
-            foreach(var v in PostersList)
+            film = new Films();
+            foreach (var v in PostersList)
             {
                 if (v.Poster == sender)
                 {
@@ -116,6 +135,7 @@ namespace Cinema
             }
             PosterScrollViewer.Visibility = Visibility.Hidden;
             FilmInformationScrollViewer.Visibility = Visibility.Visible;
+            GoToPostersGridButton.Visibility = Visibility.Visible;
             FilmInformationPosterImage.Source = byteArrayToImage(film.Poster);
             FilmInformationNameTextBlock.Text = film.Film_name;
             FilmInformationDurationLabel.Content = film.Duration;
@@ -123,9 +143,10 @@ namespace Cinema
 
             using (var db = new CinemaEntities())
             {
-                var s = from f in db.Sessions where f.Film == film.Film_id select new {
-                    Time = f.Session_time.Hour.ToString() +":"+ f.Session_time.Minute.ToString(),
-                    Price = f.Price
+                var s = from f in db.Sessions where f.Film == film.Film_id select new Session {
+                    Time = f.Session_time.Hour.ToString() + ":" + f.Session_time.Minute.ToString(),
+                    Price = f.Price,
+                    sessionId = f.Session_id
                 };
                 FilmInformationSessionDataGrid.ItemsSource = s.ToList();
             }
@@ -192,7 +213,12 @@ namespace Cinema
                         else user.First_name = FirstNameRegistrationTextBox.Text.ToString();
                         db.Users.Add(user);
                         db.SaveChanges();
-                        MessageBox.Show("Готово");
+                        MessageBox.Show("Пользователь зарегистрирован.");
+
+                        MainMenuGrid.Visibility = Visibility.Visible;
+                        RegistrationGrid.Visibility = Visibility.Hidden;
+                        MakeUserButtonVisible();
+
                     }
                 }
             }
@@ -223,10 +249,513 @@ namespace Cinema
             bitmap.EndInit();
             return bitmap;
         }
-        
+
         private void GoToAuthButton_Click(object sender, RoutedEventArgs e)
         {
-            //PosterScrollViewer.Visibility = Visibility.Hidden;
+            MainMenuGrid.Visibility = Visibility.Hidden;
+            AuthGrid.Visibility = Visibility.Visible;
         }
-    } 
+
+
+        private void GoToChoosePlacesGrid(object sender, RoutedEventArgs e)
+        {
+            Button button = (Button)sender;
+            Session session = (Session)button.DataContext;
+            PlacesGrid.Visibility = Visibility.Visible;
+            FilmInformationGrid.Visibility = Visibility.Hidden;
+            using (var db = new CinemaEntities())
+            {
+                var ses = from f in db.Sessions where f.Session_id == session.sessionId select f;
+                Sessions sessions = new Sessions();
+                foreach (var k in ses)
+                {
+                    sessions = k;
+                    price = k.Price;
+                }
+                AmountLabel.Content = "0";
+                AmountTickets = 0;
+                ListChoosedPlacesTextBlock.Text = "";
+                switch (sessions.Halls.Type_hall)
+                {
+
+                    //одинаковые типы залы имеют одинаковую схему зала.
+                    case 1:
+                        {
+                            listPlaces = new List<Place>();
+                            foreach (var p in db.GetPlaces(session.sessionId))
+                            {
+
+                                Place place = new Place();
+                                listPlaces.Add(place);
+                                place.placeInfo = p;
+                                place.label = new Label()
+                                {
+                                    Width = 25,
+                                    Height = 25,
+                                    HorizontalAlignment = HorizontalAlignment.Left,
+                                    VerticalAlignment = VerticalAlignment.Top,
+                                    Foreground = Brushes.White,
+                                    Content = place.placeInfo.Place_number,
+                                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                                    VerticalContentAlignment = VerticalAlignment.Center,
+                                    Margin = new Thickness(50 + place.placeInfo.Place_number * 35, 325 - 35 * place.placeInfo.Row_number, 0, 0)
+                                };
+                                if (place.placeInfo.Ticket == null) place.label.Background = Brushes.Green;
+                                else place.label.Background = Brushes.Red;
+                                place.label.MouseLeftButtonUp += ChooseOnePlace;
+                                PlacesGrid.Children.Add(place.label);
+                            }
+                            Label label = new Label()
+                            {
+                                Width = 25 * 8 + 70,
+                                Height = 25,
+                                Background = Brushes.LightGray,
+                                HorizontalAlignment = HorizontalAlignment.Left,
+                                VerticalAlignment = VerticalAlignment.Top,
+                                HorizontalContentAlignment = HorizontalAlignment.Center,
+                                VerticalContentAlignment = VerticalAlignment.Center,
+                                Content = "Экран",
+                                Foreground = Brushes.Black,
+                                Margin = new Thickness(85, 45 + 8 * 35, 0, 0)
+                            };
+                            PlacesGrid.Children.Add(label);
+                        }
+                        break;
+                }
+            }
+
+        }
+
+        private void MakeUserButtonVisible()
+        {
+            AuthUserButton.Visibility = Visibility.Hidden;
+            UserButton.Visibility = Visibility.Visible;
+            UserButton.Content = user.Last_name + " " + user.First_name;
+            if (user.Role == role.Admin)
+            {
+                ChangeVisibilityAdminButtons(Visibility.Visible);
+            }
+        }
+        private void ChooseOnePlace(object sender, MouseButtonEventArgs e)
+        {
+            GetPlaces_Result place = new GetPlaces_Result();
+            foreach (var l in listPlaces)
+            {
+                if (l.label == sender)
+                {
+                    place = l.placeInfo;
+                    break;
+                }
+            }
+            if (((Label)sender).Background != Brushes.Red)
+            {
+                if (((Label)sender).Background == Brushes.Orange)
+                {
+                    ListPlacesToBuy.Remove(place);
+                    ((Label)sender).Background = Brushes.Green;
+                    AmountTickets -= price;
+                    ListChoosedPlacesTextBlock.Text = "";
+                    foreach (var l in ListPlacesToBuy)
+                    {
+                        ListChoosedPlacesTextBlock.Text += "Ряд: " + l.Row_number + " Место: " + l.Place_number + "\n";
+                    }
+                }
+                else
+                {
+                    ListPlacesToBuy.Add(place);
+                    ((Label)sender).Background = Brushes.Orange;
+                    AmountTickets += price;
+                    ListChoosedPlacesTextBlock.Text += "Ряд: " + place.Row_number + " Место: " + place.Place_number + "\n";
+                }
+            }
+            AmountLabel.Content = AmountTickets;
+
+        }
+
+        private void GoToFilmInformation(object sender, RoutedEventArgs e)
+        {
+            PlacesGrid.Visibility = Visibility.Hidden;
+            FilmInformationGrid.Visibility = Visibility.Visible;
+        }
+
+        private void GoToPosterGrid(object sender, RoutedEventArgs e)
+        {
+            FilmInformationScrollViewer.Visibility = Visibility.Hidden;
+            PosterScrollViewer.Visibility = Visibility.Visible;
+            GoToPostersGridButton.Visibility = Visibility.Hidden;
+        }
+
+        private void GoToPayTickets(object sender, RoutedEventArgs e)
+        {
+            if (user == null)
+            {
+                AuthGrid.Visibility = Visibility.Visible;
+                MainMenuGrid.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                if (ListPlacesToBuy == null)
+                {
+                    MessageBox.Show("Выберите места для покупки", "Внимание!");
+                }
+                {
+                    MainMenuGrid.Visibility = Visibility.Hidden;
+                    PayGrid.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        private void BackToMainMenu(object sender, RoutedEventArgs e)
+        {
+            MainMenuGrid.Visibility = Visibility.Visible;
+            AuthGrid.Visibility = Visibility.Hidden;
+        }
+
+        private void GoToRegistration(object sender, RoutedEventArgs e)
+        {
+            RegistrationGrid.Visibility = Visibility.Visible;
+            AuthGrid.Visibility = Visibility.Hidden;
+        }
+
+        private void AuthButton_Click(object sender, RoutedEventArgs e)
+        {
+            string log = AuthLoginTextBox.Text;
+            string pas = AuthPasswordPasswordBox.Password;
+            if (log == "") MessageBox.Show("Введите логин", Error);
+            else if (pas == "") MessageBox.Show("Введите пароль", Error);
+            else
+            {
+                using (var db = new CinemaEntities())
+                {
+                    foreach (var u in from f in db.Users where f.Login == log || f.Password == pas select f)
+                    {
+                        user = u;
+                    }
+                    if (user == null) MessageBox.Show("Такого пользователя не существует.", Error);
+                    else
+                    {
+                        MainMenuGrid.Visibility = Visibility.Visible;
+                        AuthGrid.Visibility = Visibility.Hidden;
+                        MakeUserButtonVisible();
+                    }
+                }
+            }
+        }
+
+        private void AuthGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (AuthGrid.Visibility == Visibility.Visible)
+            {
+                AuthLoginTextBox.Text = "";
+                AuthPasswordPasswordBox.Password = "";
+            }
+        }
+
+        private void BackToAuth(object sender, RoutedEventArgs e)
+        {
+            RegistrationGrid.Visibility = Visibility.Hidden;
+            AuthGrid.Visibility = Visibility.Visible;
+        }
+
+        private void UserButton_Click(object sender, RoutedEventArgs e)
+        {
+            UserGrid.Visibility = Visibility.Visible;
+            MainMenuGrid.Visibility = Visibility.Hidden;
+            using (var db = new CinemaEntities())
+            {
+                var p = db.GetPursheDetails(user.Login);
+                PursheDetailsDataGrid.ItemsSource = p.ToList();
+            }
+        }
+
+        private void GoOutFromUserGrid(object sender, RoutedEventArgs e)
+        {
+            UserGrid.Visibility = Visibility.Hidden;
+            MainMenuGrid.Visibility = Visibility.Visible;
+        }
+
+        private void ExitFromUser(object sender, RoutedEventArgs e)
+        {
+            user = null;
+            UserGrid.Visibility = Visibility.Hidden;
+            MainMenuGrid.Visibility = Visibility.Visible;
+            AuthUserButton.Visibility = Visibility.Visible;
+            UserButton.Visibility = Visibility.Hidden;
+            ChangeVisibilityAdminButtons(Visibility.Hidden);
+        }
+
+        private void RegistrationGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (RegistrationGrid.Visibility == Visibility.Visible)
+            {
+                LoginRegistrationTextBox.Text = "";
+                PasswordRegistration2PasswordBox.Password = "";
+                PasswordRegistrationPasswordBox.Password = "";
+                FirstNameRegistrationTextBox.Text = "";
+                LastNameRegistrationTextBox.Text = "";
+            }
+        }
+
+        private void FromPayToMenu(object sender, RoutedEventArgs e)
+        {
+            PayGrid.Visibility = Visibility.Hidden;
+            MainMenuGrid.Visibility = Visibility.Visible;
+        }
+
+        private void PayGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (PayGrid.Visibility == Visibility.Visible)
+            {
+                PayNumberCardTextBox1.Text = "";
+                PayNumberCardTextBox2.Text = "";
+                PayNumberCardTextBox3.Text = "";
+                PayNumberCardTextBox4.Text = "";
+                PayMonthCardTextBox.Text = "";
+                PayYearCardTextBox.Text = "";
+                PayUserCardTextBox.Text = "";
+                PayCVC2CardTextBox.Text = "";
+            }
+        }
+
+
+        private void PayTickets(object sender, RoutedEventArgs e)
+        {
+            string regNum = @"\d\d\d\d";
+            string regDate = @"\d\d";
+
+            if (!Regex.IsMatch(PayNumberCardTextBox1.Text, regNum) ||
+                !Regex.IsMatch(PayNumberCardTextBox2.Text, regNum) ||
+                !Regex.IsMatch(PayNumberCardTextBox3.Text, regNum) ||
+                !Regex.IsMatch(PayNumberCardTextBox4.Text, regNum)) MessageBox.Show("Неверный номер карты", Error);
+            else if (!Regex.IsMatch(PayMonthCardTextBox.Text, regDate) ||
+                    !Regex.IsMatch(PayYearCardTextBox.Text, regDate) ||
+                    int.Parse(PayMonthCardTextBox.Text) > 12 ||
+                    int.Parse(PayMonthCardTextBox.Text) < 1) MessageBox.Show("Неверная дата", Error);
+            else if (PayUserCardTextBox.Text == "") MessageBox.Show("Укажите владельца карты", Error);
+            else if (!Regex.IsMatch(PayCVC2CardTextBox.Text, @"\d\d\d")) MessageBox.Show("Неверный код CVC2", Error);
+            else
+            {
+                using (var db = new CinemaEntities())
+                {
+                    Purchases purchases = new Purchases()
+                    {
+                        Buyer = user.Login,
+                        Purchase_date = DateTime.Now
+                    };
+                    db.Purchases.Add(purchases);
+                    foreach (var t in ListPlacesToBuy)
+                    {
+                        var o = from f in db.Tickets where f.Ticket_id == t.Ticket_id select f;
+                        foreach (var p in o)
+                        {
+                            purchases.Tickets.Add(p);
+                        }
+                    }
+                    db.SaveChanges();
+                }
+                MessageBox.Show("Билеты куплены");
+                PayGrid.Visibility = Visibility.Hidden;
+                PosterScrollViewer.Visibility = Visibility.Visible;
+                PlacesGrid.Visibility = Visibility.Hidden;
+                MainMenuGrid.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void PayNumberCardTextBox1_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            TextBox textBox = (TextBox)sender;
+            if (textBox == PayNumberCardTextBox1)
+            {
+                if (textBox.Text.Length == 4) PayNumberCardTextBox2.Focus();
+            }
+            else if (textBox == PayNumberCardTextBox2)
+            {
+                if (textBox.Text.Length == 4) PayNumberCardTextBox3.Focus();
+            }
+            else if (textBox == PayNumberCardTextBox3)
+            {
+                if (textBox.Text.Length == 4) PayNumberCardTextBox4.Focus();
+            }
+        }
+
+        private void FromMenuToAddFilm(object sender, RoutedEventArgs e)
+        {
+            MainMenuGrid.Visibility = Visibility.Hidden;
+            FilmAddGrid.Visibility = Visibility.Visible;
+        }
+
+        private void FromAddFilmToManu(object sender, RoutedEventArgs e)
+        {
+            MainMenuGrid.Visibility = Visibility.Visible;
+            FilmAddGrid.Visibility = Visibility.Hidden;
+        }
+
+        private void AddPosterNewFilm(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            if (openFileDialog.ShowDialog() == true)
+            {
+                posterWay = openFileDialog.FileName;
+                string regex = @"\.[(png)(jpg)]";
+                if (Regex.IsMatch(openFileDialog.FileName, regex))
+                {
+                    ImageBrush image = new ImageBrush
+                    {
+                        ImageSource = new BitmapImage(new Uri(openFileDialog.FileName, UriKind.Relative))
+                    };
+                    NewFilmPosterLabel.Background = image;
+                }
+                else MessageBox.Show("Неверный файл изображения", Error);
+
+            }
+        }
+        string posterWay;
+        private void AddNewFilm(object sender, RoutedEventArgs e)
+        {
+            string reg2 = @"\d\d";
+            string reg1 = @"\d";
+            if (NewFilmNameTextBox.Text == "") MessageBox.Show("Неверное название фильма", Error);
+            else if (NewFilmDateReleaseDatePicker.SelectedDate == null) MessageBox.Show("Укажите дату релиза", Error);
+            else if (NewFilmDateEndDatePicker.SelectedDate != null &&
+                     NewFilmDateReleaseDatePicker.SelectedDate > NewFilmDateEndDatePicker.SelectedDate) MessageBox.Show("Прокат фильма не может закончиться раньше, чем он начнется", Error);
+            else if (!(Regex.IsMatch(NewFilmDurationHourTextBox.Text, reg2) || Regex.IsMatch(NewFilmDurationHourTextBox.Text, reg1)) ||
+                     !(Regex.IsMatch(NewFilmDurationMinuteTextBox.Text, reg2) || Regex.IsMatch(NewFilmDurationMinuteTextBox.Text, reg1)) ||
+                     int.Parse(NewFilmDurationMinuteTextBox.Text) > 59 ||
+                     (int.Parse(NewFilmDurationMinuteTextBox.Text) == 0 &&
+                      int.Parse(NewFilmDurationHourTextBox.Text) == 0)) MessageBox.Show("Неверная длительность фильма", Error);
+            else if (NewFilmPosterLabel.Background == null) MessageBox.Show("Ваберите постер", Error);
+            else
+            {
+                Films film = new Films()
+                {
+                    Film_name = NewFilmNameTextBox.Text,
+                    Date_release = (DateTime)NewFilmDateReleaseDatePicker.SelectedDate,
+                    Date_end = NewFilmDateEndDatePicker.SelectedDate,
+                    Duration = new TimeSpan(int.Parse(NewFilmDurationHourTextBox.Text), int.Parse(NewFilmDurationMinuteTextBox.Text), 0),
+                    Description = NewFilmDescriptionTextBox.Text,
+                    Poster = ImageToByteArray(System.Drawing.Image.FromFile(posterWay))
+                };
+                using (var db = new CinemaEntities())
+                {
+                    db.Films.Add(film);
+                    db.SaveChanges();
+                    MessageBox.Show("Фильм добавлен");
+                }
+                LoadPosters();
+            }
+            FilmAddGrid.Visibility = Visibility.Hidden;
+            MainMenuGrid.Visibility = Visibility.Visible;
+        }
+
+        private void PosterScrollViewer_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            LoadPosters();
+        }
+
+        private void FilmAddGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            NewFilmNameTextBox.Text = "";
+            NewFilmDateReleaseDatePicker.SelectedDate = null;
+            NewFilmDateEndDatePicker.SelectedDate = null;
+            NewFilmDurationHourTextBox.Text = "";
+            NewFilmDurationMinuteTextBox.Text = "";
+            NewFilmDescriptionTextBox.Text = "";
+            NewFilmPosterLabel.Background = null;
+        }
+
+        private void GoToUsersRoleGrid(object sender, RoutedEventArgs e)
+        {
+            MainMenuGrid.Visibility = Visibility.Hidden;
+            UsersRoleGrid.Visibility = Visibility.Visible;
+            LoadUsersRole();
+        }
+
+        private void GoBackFromUsersRoleGrid(object sender, RoutedEventArgs e)
+        {
+            MainMenuGrid.Visibility = Visibility.Visible;
+            UsersRoleGrid.Visibility = Visibility.Hidden;
+            if (user.Role != role.Admin) ChangeVisibilityAdminButtons(Visibility.Hidden);
+        }
+
+        private void ChangeUserRole(object sender, RoutedEventArgs e)
+        {
+            if ((Button)sender == ChangeRoleOnAdminButton) ChangeUserRole(role.Admin);
+            else ChangeUserRole(role.Visiter);
+            LoadUsersRole();
+        }
+
+        private void ChangeUserRole(string role)
+        {
+            UserRole userRole = new UserRole();
+            var o = UsersRoleDataGrid.SelectedCells;
+            foreach (var l in o)
+            {
+                userRole = (UserRole)l.Item;
+            }
+            using (var db = new CinemaEntities())
+            {
+                var u = from f in db.Users where f.Login == userRole.Login select f;
+                foreach (var u2 in u)
+                {
+                    u2.Role = role;
+                    if (user.Login == u2.Login) user.Role = role;
+                }
+                db.SaveChanges();
+            }
+        }
+
+        private void ChangeVisibilityAdminButtons(Visibility visibility)
+        {
+            AddNewFilmButton.Visibility = visibility;
+            UsersRoleButton.Visibility = visibility;
+            SessionSetupButton.Visibility = visibility;
+        }
+        private void LoadUsersRole()
+        {
+            using (var db = new CinemaEntities())
+            {
+                var k = from f in db.Users select new UserRole { Login = f.Login, Role = f.Role };
+                UsersRoleDataGrid.ItemsSource = k.ToList();
+            }
+        }
+
+        private void SessionSetupButton_Click(object sender, RoutedEventArgs e)
+        {
+            MainMenuGrid.Visibility = Visibility.Hidden;
+            SessionSetupGrid.Visibility = Visibility.Visible;
+        }
+        List<Sessions> ListSessions;
+        private void LoadSessions()
+        {
+            ListSessions = new List<Sessions>();
+            using (var db = new CinemaEntities())
+            {
+                var s = from f in db.Sessions where f.Film == film.Film_id select f;
+                foreach (var ses in s)
+                {
+                    ListSessions.Add(ses);
+                }
+            }
+            SessionsDataGrid.ItemsSource = ListSessions;
+        }
+        private void GoBackFromSessionSetup(object sender, RoutedEventArgs e)
+        {
+            MainMenuGrid.Visibility = Visibility.Visible;
+            SessionSetupGrid.Visibility = Visibility.Hidden;
+        }
+
+        private void SaveSessions(object sender, RoutedEventArgs e)
+        {
+            var l = SessionsDataGrid.ItemsSource;
+            foreach (var o in l)
+            {
+                var p = 0;
+            }
+            using (var db = new CinemaEntities())
+            {
+                db.SaveChanges();
+            }
+        }
+    }
+
 }

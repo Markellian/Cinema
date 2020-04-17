@@ -57,7 +57,7 @@
           </Key>
           <Property Name="Purchase_id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="Buyer" Type="nvarchar" MaxLength="30" Nullable="false" />
-          <Property Name="Purchase_date" Type="date" Nullable="false" />
+          <Property Name="Purchase_date" Type="datetime" Nullable="false" />
         </EntityType>
         <EntityType Name="Roles">
           <Key>
@@ -71,19 +71,9 @@
           </Key>
           <Property Name="Session_id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="Session_time" Type="datetime" Nullable="false" />
+          <Property Name="Price" Type="money" Nullable="false" />
           <Property Name="Film" Type="int" Nullable="false" />
-          <Property Name="Price" Type="money" />
           <Property Name="Hall" Type="int" Nullable="false" />
-        </EntityType>
-        <EntityType Name="sysdiagrams">
-          <Key>
-            <PropertyRef Name="diagram_id" />
-          </Key>
-          <Property Name="name" Type="nvarchar" MaxLength="128" Nullable="false" />
-          <Property Name="principal_id" Type="int" Nullable="false" />
-          <Property Name="diagram_id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="version" Type="int" />
-          <Property Name="definition" Type="varbinary(max)" />
         </EntityType>
         <EntityType Name="Tickets">
           <Key>
@@ -262,6 +252,15 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Function Name="GetLastPurchase" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="user" Type="nvarchar" Mode="In" />
+        </Function>
+        <Function Name="GetPlaces" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="s" Type="int" Mode="In" />
+        </Function>
+        <Function Name="GetPursheDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="user" Type="nvarchar" Mode="In" />
+        </Function>
         <EntityContainer Name="Хранилище CinemaModelContainer">
           <EntitySet Name="Cinemas" EntityType="Self.Cinemas" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Films" EntityType="Self.Films" Schema="dbo" store:Type="Tables" />
@@ -271,7 +270,6 @@
           <EntitySet Name="Purchases" EntityType="Self.Purchases" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Roles" EntityType="Self.Roles" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Sessions" EntityType="Self.Sessions" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="sysdiagrams" EntityType="Self.sysdiagrams" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Tickets" EntityType="Self.Tickets" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Type_hall" EntityType="Self.Type_hall" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Type_place" EntityType="Self.Type_place" Schema="dbo" store:Type="Tables" />
@@ -345,10 +343,10 @@
           <Property Name="Film_name" Type="String" MaxLength="50" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="Date_release" Type="DateTime" Nullable="false" Precision="0" />
           <Property Name="Date_end" Type="DateTime" Precision="0" />
-          <NavigationProperty Name="Sessions" Relationship="Self.FK__Sessions__Film__48CFD27E" FromRole="Films" ToRole="Sessions" />
           <Property Name="Duration" Type="Time" Nullable="false" Precision="7" />
           <Property Name="Description" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
-          <Property Name="Poster" Type="Binary" Nullable="false" MaxLength="Max" FixedLength="false" />
+          <Property Name="Poster" Type="Binary" MaxLength="Max" FixedLength="false" Nullable="false" />
+          <NavigationProperty Name="Sessions" Relationship="Self.FK__Sessions__Film__48CFD27E" FromRole="Films" ToRole="Sessions" />
         </EntityType>
         <EntityType Name="Halls">
           <Key>
@@ -382,7 +380,7 @@
           </Key>
           <Property Name="Purchase_id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="Buyer" Type="String" MaxLength="30" FixedLength="false" Unicode="true" Nullable="false" />
-          <Property Name="Purchase_date" Type="DateTime" Nullable="false" Precision="0" />
+          <Property Name="Purchase_date" Type="DateTime" Nullable="false" Precision="3" />
           <NavigationProperty Name="Users" Relationship="Self.FK__Purchases__Buyer__534D60F1" FromRole="Purchases" ToRole="Users" />
           <NavigationProperty Name="Tickets" Relationship="Self.Purchase_details" FromRole="Purchases" ToRole="Tickets" />
         </EntityType>
@@ -399,12 +397,12 @@
           </Key>
           <Property Name="Session_id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="Session_time" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="Price" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
           <Property Name="Film" Type="Int32" Nullable="false" />
           <Property Name="Hall" Type="Int32" Nullable="false" />
           <NavigationProperty Name="Films" Relationship="Self.FK__Sessions__Film__48CFD27E" FromRole="Sessions" ToRole="Films" />
           <NavigationProperty Name="Halls" Relationship="Self.FK__Sessions__Hall__49C3F6B7" FromRole="Sessions" ToRole="Halls" />
           <NavigationProperty Name="Tickets" Relationship="Self.FK__Tickets__Session__4CA06362" FromRole="Sessions" ToRole="Tickets" />
-          <Property Name="Price" Type="Decimal" Precision="19" Scale="4" />
         </EntityType>
         <EntityType Name="Tickets">
           <Key>
@@ -626,18 +624,32 @@
             <End Role="Purchases" EntitySet="Purchases" />
             <End Role="Tickets" EntitySet="Tickets" />
           </AssociationSet>
-          <EntitySet Name="sysdiagrams" EntityType="CinemaModel.sysdiagrams" />
+          <FunctionImport Name="GetLastPurchase" ReturnType="Collection(Int32)">
+          <Parameter Name="user" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="GetPlaces" ReturnType="Collection(CinemaModel.GetPlaces_Result)">
+          <Parameter Name="s" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="GetPursheDetails" ReturnType="Collection(CinemaModel.GetPursheDetails_Result)">
+          <Parameter Name="user" Mode="In" Type="String" />
+          </FunctionImport>
         </EntityContainer>
-        <EntityType Name="sysdiagrams">
-          <Key>
-            <PropertyRef Name="diagram_id" />
-          </Key>
-          <Property Name="name" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
-          <Property Name="principal_id" Type="Int32" Nullable="false" />
-          <Property Name="diagram_id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="version" Type="Int32" />
-          <Property Name="definition" Type="Binary" MaxLength="Max" FixedLength="false" />
-        </EntityType>
+        <ComplexType Name="GetPlaces_Result">
+          <Property Type="Int32" Name="Ticket_id" Nullable="false" />
+          <Property Type="Int32" Name="Place_number" Nullable="false" />
+          <Property Type="Int32" Name="Row_number" Nullable="false" />
+          <Property Type="Int32" Name="Ticket" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="GetPursheDetails_Result">
+          <Property Type="Int32" Name="Purchase_id" Nullable="false" />
+          <Property Type="DateTime" Name="Purchase_date" Nullable="false" />
+          <Property Type="DateTime" Name="Session_time" Nullable="false" Precision="23" />
+          <Property Type="Decimal" Name="Price" Nullable="false" Precision="19" />
+          <Property Type="Int32" Name="Hall" Nullable="false" />
+          <Property Type="Int32" Name="Place_number" Nullable="false" />
+          <Property Type="Int32" Name="Row_number" Nullable="false" />
+          <Property Type="String" Name="Film_name" Nullable="false" MaxLength="50" />
+        </ComplexType>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -655,13 +667,13 @@
           <EntitySetMapping Name="Films">
             <EntityTypeMapping TypeName="CinemaModel.Films">
               <MappingFragment StoreEntitySet="Films">
-                <ScalarProperty Name="Poster" ColumnName="Poster" />
-                <ScalarProperty Name="Description" ColumnName="Description" />
-                <ScalarProperty Name="Duration" ColumnName="Duration" />
                 <ScalarProperty Name="Film_id" ColumnName="Film_id" />
                 <ScalarProperty Name="Film_name" ColumnName="Film_name" />
                 <ScalarProperty Name="Date_release" ColumnName="Date_release" />
                 <ScalarProperty Name="Date_end" ColumnName="Date_end" />
+                <ScalarProperty Name="Duration" ColumnName="Duration" />
+                <ScalarProperty Name="Description" ColumnName="Description" />
+                <ScalarProperty Name="Poster" ColumnName="Poster" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -705,9 +717,9 @@
           <EntitySetMapping Name="Sessions">
             <EntityTypeMapping TypeName="CinemaModel.Sessions">
               <MappingFragment StoreEntitySet="Sessions">
-                <ScalarProperty Name="Price" ColumnName="Price" />
                 <ScalarProperty Name="Session_id" ColumnName="Session_id" />
                 <ScalarProperty Name="Session_time" ColumnName="Session_time" />
+                <ScalarProperty Name="Price" ColumnName="Price" />
                 <ScalarProperty Name="Film" ColumnName="Film" />
                 <ScalarProperty Name="Hall" ColumnName="Hall" />
               </MappingFragment>
@@ -758,17 +770,31 @@
               <ScalarProperty Name="Ticket_id" ColumnName="Ticket" />
             </EndProperty>
           </AssociationSetMapping>
-          <EntitySetMapping Name="sysdiagrams">
-            <EntityTypeMapping TypeName="CinemaModel.sysdiagrams">
-              <MappingFragment StoreEntitySet="sysdiagrams">
-                <ScalarProperty Name="definition" ColumnName="definition" />
-                <ScalarProperty Name="version" ColumnName="version" />
-                <ScalarProperty Name="diagram_id" ColumnName="diagram_id" />
-                <ScalarProperty Name="principal_id" ColumnName="principal_id" />
-                <ScalarProperty Name="name" ColumnName="name" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
+          <FunctionImportMapping FunctionImportName="GetLastPurchase" FunctionName="Хранилище CinemaModel.GetLastPurchase" />
+          <FunctionImportMapping FunctionImportName="GetPlaces" FunctionName="Хранилище CinemaModel.GetPlaces">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CinemaModel.GetPlaces_Result">
+                <ScalarProperty Name="Ticket_id" ColumnName="Ticket_id" />
+                <ScalarProperty Name="Place_number" ColumnName="Place_number" />
+                <ScalarProperty Name="Row_number" ColumnName="Row_number" />
+                <ScalarProperty Name="Ticket" ColumnName="Ticket" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="GetPursheDetails" FunctionName="Хранилище CinemaModel.GetPursheDetails">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CinemaModel.GetPursheDetails_Result">
+                <ScalarProperty Name="Purchase_id" ColumnName="Purchase_id" />
+                <ScalarProperty Name="Purchase_date" ColumnName="Purchase_date" />
+                <ScalarProperty Name="Session_time" ColumnName="Session_time" />
+                <ScalarProperty Name="Price" ColumnName="Price" />
+                <ScalarProperty Name="Hall" ColumnName="Hall" />
+                <ScalarProperty Name="Place_number" ColumnName="Place_number" />
+                <ScalarProperty Name="Row_number" ColumnName="Row_number" />
+                <ScalarProperty Name="Film_name" ColumnName="Film_name" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

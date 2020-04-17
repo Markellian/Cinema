@@ -10,14 +10,16 @@
 namespace Cinema
 {
     using System;
-    using System.Collections.Generic;
     
-    public partial class sysdiagrams
+    public partial class GetPursheDetails_Result
     {
-        public string name { get; set; }
-        public int principal_id { get; set; }
-        public int diagram_id { get; set; }
-        public Nullable<int> version { get; set; }
-        public byte[] definition { get; set; }
+        public int Purchase_id { get; set; }
+        public System.DateTime Purchase_date { get; set; }
+        public System.DateTime Session_time { get; set; }
+        public decimal Price { get; set; }
+        public int Hall { get; set; }
+        public int Place_number { get; set; }
+        public int Row_number { get; set; }
+        public string Film_name { get; set; }
     }
 }

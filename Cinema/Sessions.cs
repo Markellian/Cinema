@@ -22,9 +22,9 @@ namespace Cinema
     
         public int Session_id { get; set; }
         public System.DateTime Session_time { get; set; }
+        public decimal Price { get; set; }
         public int Film { get; set; }
         public int Hall { get; set; }
-        public Nullable<decimal> Price { get; set; }
     
         public virtual Films Films { get; set; }
         public virtual Halls Halls { get; set; }

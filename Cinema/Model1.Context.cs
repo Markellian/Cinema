@@ -12,6 +12,8 @@ namespace Cinema
     using System;
     using System.Data.Entity;
     using System.Data.Entity.Infrastructure;
+    using System.Data.Entity.Core.Objects;
+    using System.Linq;
     
     public partial class CinemaEntities : DbContext
     {
@@ -36,6 +38,32 @@ namespace Cinema
         public virtual DbSet<Type_hall> Type_hall { get; set; }
         public virtual DbSet<Type_place> Type_place { get; set; }
         public virtual DbSet<Users> Users { get; set; }
-        public virtual DbSet<sysdiagrams> sysdiagrams { get; set; }
+    
+        public virtual ObjectResult<Nullable<int>> GetLastPurchase(string user)
+        {
+            var userParameter = user != null ?
+                new ObjectParameter("user", user) :
+                new ObjectParameter("user", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<Nullable<int>>("GetLastPurchase", userParameter);
+        }
+    
+        public virtual ObjectResult<GetPlaces_Result> GetPlaces(Nullable<int> s)
+        {
+            var sParameter = s.HasValue ?
+                new ObjectParameter("s", s) :
+                new ObjectParameter("s", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPlaces_Result>("GetPlaces", sParameter);
+        }
+    
+        public virtual ObjectResult<GetPursheDetails_Result> GetPursheDetails(string user)
+        {
+            var userParameter = user != null ?
+                new ObjectParameter("user", user) :
+                new ObjectParameter("user", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPursheDetails_Result>("GetPursheDetails", userParameter);
+        }
     }
 }
