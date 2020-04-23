@@ -73,5 +73,14 @@ namespace Cinema
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetPursheDetails_Result>("GetPursheDetails", userParameter);
         }
+    
+        public virtual ObjectResult<IsTicketsOnSessionBought_Result> IsTicketsOnSessionBought(Nullable<int> session)
+        {
+            var sessionParameter = session.HasValue ?
+                new ObjectParameter("Session", session) :
+                new ObjectParameter("Session", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<IsTicketsOnSessionBought_Result>("IsTicketsOnSessionBought", sessionParameter);
+        }
     }
 }

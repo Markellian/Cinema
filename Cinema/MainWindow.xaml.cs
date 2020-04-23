@@ -31,6 +31,7 @@ namespace Cinema
         private const string Error = "Ошибка!"; //Заголовок для MessageBox
         private List<PosterClass> PostersList = new List<PosterClass>();
         readonly RoleName role = new RoleName(); //для указаная роли для посетителей при регистрации
+        private WorkWithImage ImageWork = new WorkWithImage();
         private Users user;
         private Films film;
         private Cinemas Cinema;
@@ -43,16 +44,22 @@ namespace Cinema
         private readonly string reg2 = @"\d\d";
         private readonly string reg1 = @"\d";
         private DateTime dateTime;
+        string posterWay;
+        private Grid lastGrid; //чтобы возвразаться на последний грид
         public MainWindow()
         {
             InitializeComponent();
             LoadPosters();
             using (var db = new CinemaEntities())
             {
+                var l = from f in db.Films where f.Film_id == 1 select f;
+                foreach (var t in l) film = t;
                 var c = from f in db.Cinemas where f.Cinema_id == 1 select f;
                 foreach (var c1 in c) Cinema = c1;
             }
+            LoadSessions();
         }
+        
         /// <summary>
         /// Загрузка постеров фильмов на главный экран
         /// </summary>
@@ -75,7 +82,7 @@ namespace Cinema
                     {
                         Width = 150,
                         Height = 200,
-                        Source = ByteArrayToImage(v.Poster),
+                        Source = ImageWork.ByteArrayToImage(v.Poster),
                         Margin = new Thickness(0, 0, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top,
@@ -109,18 +116,16 @@ namespace Cinema
                     grid.Children.Add(image);
                     grid.Children.Add(textBlock);
                     PosterGrid.Children.Add(grid);
-                    //PosterGrid.Children.Add(image);
-                    //PosterGrid.Children.Add(textBlock);
                     PosterClass pp = new PosterClass
                     {
                         film = v,
                         Poster = grid
                     };
                     PostersList.Add(pp);
-
                 }
             }
         }
+       
         /// <summary>
         /// На постер нажали правой кнопкой мыши
         /// </summary>
@@ -128,7 +133,6 @@ namespace Cinema
         /// <param name="e"></param>
         private void Poster_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            PosterClass poster = new PosterClass();
             film = new Films();
             foreach (var v in PostersList)
             {
@@ -138,14 +142,10 @@ namespace Cinema
                     break;
                 }
             }
-            PosterScrollViewer.Visibility = Visibility.Hidden;
-            FilmInformationScrollViewer.Visibility = Visibility.Visible;
-            GoToPostersGridButton.Visibility = Visibility.Visible;
-            FilmInformationPosterImage.Source = ByteArrayToImage(film.Poster);
-            FilmInformationNameTextBlock.Text = film.Film_name;
-            FilmInformationDurationLabel.Content = film.Duration;
-            FilmInformationDescriptionTextBlock.Text = film.Description;            
+            ListPosterGrid.Visibility = Visibility.Hidden;
+            FilmInformationGrid.Visibility = Visibility.Visible;          
         }
+        
         /// <summary>
         /// Возвращение основных цветов при покидании курсором постера
         /// </summary>
@@ -156,6 +156,7 @@ namespace Cinema
             Grid grid = (Grid)sender;
             grid.Background = Brushes.White;
         }
+        
         /// <summary>
         /// Выделение цветом постера, на который направлен курсор
         /// </summary>
@@ -210,52 +211,37 @@ namespace Cinema
                         db.SaveChanges();
                         MessageBox.Show("Пользователь зарегистрирован.");
 
-                        MainMenuGrid.Visibility = Visibility.Visible;
+                        lastGrid.Visibility = Visibility.Visible;
                         RegistrationGrid.Visibility = Visibility.Hidden;
-                        MakeUserButtonVisible();
+                        ChangeVisibilityUserButtons();
 
                     }
                 }
             }
         }
+        
         /// <summary>
-        /// из изображения в строку байтов
+        /// переход на страницу авторизации
         /// </summary>
-        /// <param name="imageIn"></param>
-        /// <returns></returns>
-        public byte[] ImageToByteArray(System.Drawing.Image imageIn)
-        {
-            using (var ms = new MemoryStream())
-            {
-                imageIn.Save(ms, imageIn.RawFormat);
-                return ms.ToArray();
-            }
-        }
-        /// <summary>
-        /// Из строки байтов в изображение
-        /// </summary>
-        /// <param name="byteArrayIn"></param>
-        /// <returns></returns>
-        public BitmapImage ByteArrayToImage(byte[] byteArrayIn)
-        {
-            var bitmap = new BitmapImage();
-            bitmap.BeginInit();
-            bitmap.StreamSource = new MemoryStream(byteArrayIn);
-            bitmap.EndInit();
-            return bitmap;
-        }
-
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoToAuthButton_Click(object sender, RoutedEventArgs e)
         {
-            MainMenuGrid.Visibility = Visibility.Hidden;
+            lastGrid = ((Grid)((Button)sender).Parent);
+            lastGrid.Visibility = Visibility.Hidden;
             AuthGrid.Visibility = Visibility.Visible;
         }
 
-
+        /// <summary>
+        /// Переход на страницу выбора мест
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoToChoosePlacesGrid(object sender, RoutedEventArgs e)
         {
             Button button = (Button)sender;
             Session session = (Session)button.DataContext;
+            lastGrid = PlacesGrid;
             PlacesGrid.Visibility = Visibility.Visible;
             FilmInformationGrid.Visibility = Visibility.Hidden;
             using (var db = new CinemaEntities())
@@ -314,23 +300,20 @@ namespace Cinema
                                 Margin = new Thickness(85, 45 + 8 * 35, 0, 0)
                             };
                             PlacesGrid.Children.Add(label);
+                            break;
                         }
-                        break;
+
+                        
                 }
             }
 
         }
-
-        private void MakeUserButtonVisible()
-        {
-            AuthUserButton.Visibility = Visibility.Hidden;
-            UserButton.Visibility = Visibility.Visible;
-            UserButton.Content = user.Last_name + " " + user.First_name;
-            if (user.Role == role.Admin)
-            {
-                ChangeVisibilityAdminButtons(Visibility.Visible);
-            }
-        }
+        
+        /// <summary>
+        /// Пользователь нажал на метку 1 места
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ChooseOnePlace(object sender, MouseButtonEventArgs e)
         {
             GetPlaces_Result place = new GetPlaces_Result();
@@ -364,28 +347,41 @@ namespace Cinema
                 }
             }
             AmountLabel.Content = AmountTickets;
-
         }
 
-        private void GoToFilmInformation(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Вернуться из страницы выбора к просмотру сеансов фильма
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void GoToFilmInformationFromChoosePlaces(object sender, RoutedEventArgs e)
         {
             PlacesGrid.Visibility = Visibility.Hidden;
             FilmInformationGrid.Visibility = Visibility.Visible;
         }
 
+        /// <summary>
+        /// Вернуться из страницы просмотра сеансов к списку фильмов
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoToPosterGrid(object sender, RoutedEventArgs e)
         {
-            FilmInformationScrollViewer.Visibility = Visibility.Hidden;
-            PosterScrollViewer.Visibility = Visibility.Visible;
-            GoToPostersGridButton.Visibility = Visibility.Hidden;
+            FilmInformationGrid.Visibility = Visibility.Hidden;
+            ListPosterGrid.Visibility = Visibility.Visible;
         }
 
+        /// <summary>
+        /// Нажата кнопка Оплатить
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoToPayTickets(object sender, RoutedEventArgs e)
         {
             if (user == null)
             {
                 AuthGrid.Visibility = Visibility.Visible;
-                MainMenuGrid.Visibility = Visibility.Hidden;
+                PlacesGrid.Visibility = Visibility.Hidden;
             }
             else
             {
@@ -393,25 +389,41 @@ namespace Cinema
                 {
                     MessageBox.Show("Выберите места для покупки", "Внимание!");
                 }
+                else
                 {
-                    MainMenuGrid.Visibility = Visibility.Hidden;
+                    PlacesGrid.Visibility = Visibility.Hidden;
                     PayGrid.Visibility = Visibility.Visible;
                 }
             }
         }
 
-        private void BackToMainMenu(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// В окне авторизации нажата кнопка Назад
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BackFromAuth(object sender, RoutedEventArgs e)
         {
-            MainMenuGrid.Visibility = Visibility.Visible;
+            lastGrid.Visibility = Visibility.Visible;
             AuthGrid.Visibility = Visibility.Hidden;
         }
 
+        /// <summary>
+        /// Перейти к окну регистрации
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoToRegistration(object sender, RoutedEventArgs e)
         {
             RegistrationGrid.Visibility = Visibility.Visible;
             AuthGrid.Visibility = Visibility.Hidden;
         }
 
+        /// <summary>
+        /// Авторизироваться
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void AuthButton_Click(object sender, RoutedEventArgs e)
         {
             string log = AuthLoginTextBox.Text;
@@ -429,14 +441,19 @@ namespace Cinema
                     if (user == null) MessageBox.Show("Такого пользователя не существует.", Error);
                     else
                     {
-                        MainMenuGrid.Visibility = Visibility.Visible;
+                        lastGrid.Visibility = Visibility.Visible;
                         AuthGrid.Visibility = Visibility.Hidden;
-                        MakeUserButtonVisible();
+                        ChangeVisibilityUserButtons();
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Когда видимость окна авторизации изменилась 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void AuthGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (AuthGrid.Visibility == Visibility.Visible)
@@ -446,16 +463,27 @@ namespace Cinema
             }
         }
 
+        /// <summary>
+        /// Вернуться с окна регистрации к авторизации
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BackToAuth(object sender, RoutedEventArgs e)
         {
             RegistrationGrid.Visibility = Visibility.Hidden;
             AuthGrid.Visibility = Visibility.Visible;
         }
 
+        /// <summary>
+        /// Перейти к окну пользователя
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void UserButton_Click(object sender, RoutedEventArgs e)
         {
             UserGrid.Visibility = Visibility.Visible;
-            MainMenuGrid.Visibility = Visibility.Hidden;
+            lastGrid = ((Grid)((Button)sender).Parent);
+            lastGrid.Visibility = Visibility.Hidden;
             using (var db = new CinemaEntities())
             {
                 var p = db.GetPursheDetails(user.Login);
@@ -463,19 +491,27 @@ namespace Cinema
             }
         }
 
+        /// <summary>
+        /// Вернуться со страницы пользователя
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoOutFromUserGrid(object sender, RoutedEventArgs e)
         {
             UserGrid.Visibility = Visibility.Hidden;
-            MainMenuGrid.Visibility = Visibility.Visible;
+            lastGrid.Visibility = Visibility.Visible;
         }
 
+        /// <summary>
+        /// Выйти из профиля
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ExitFromUser(object sender, RoutedEventArgs e)
         {
             user = null;
-            UserGrid.Visibility = Visibility.Hidden;
-            MainMenuGrid.Visibility = Visibility.Visible;
-            AuthUserButton.Visibility = Visibility.Visible;
-            UserButton.Visibility = Visibility.Hidden;
+            GoOutFromUserGrid(null, null);
+            ChangeVisibilityUserButtons();
             ChangeVisibilityAdminButtons(Visibility.Hidden);
         }
 
@@ -491,10 +527,15 @@ namespace Cinema
             }
         }
 
+        /// <summary>
+        /// Вернуться из окна оплаты
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void FromPayToMenu(object sender, RoutedEventArgs e)
         {
             PayGrid.Visibility = Visibility.Hidden;
-            MainMenuGrid.Visibility = Visibility.Visible;
+            lastGrid.Visibility = Visibility.Visible;
         }
 
         private void PayGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -512,7 +553,11 @@ namespace Cinema
             }
         }
 
-
+        /// <summary>
+        /// Оплатить билеты
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void PayTickets(object sender, RoutedEventArgs e)
         {
             string regNum = @"\d\d\d\d";
@@ -550,11 +595,7 @@ namespace Cinema
                 }
                 MessageBox.Show("Билеты куплены");
                 PayGrid.Visibility = Visibility.Hidden;
-                PosterScrollViewer.Visibility = Visibility.Visible;
-                PlacesGrid.Visibility = Visibility.Hidden;
-                FilmInformationScrollViewer.Visibility = Visibility.Hidden;
-                GoToPostersGridButton.Visibility = Visibility.Hidden;
-                MainMenuGrid.Visibility = Visibility.Visible;
+                ListPosterGrid.Visibility = Visibility.Visible;
             }
         }
 
@@ -575,18 +616,33 @@ namespace Cinema
             }
         }
 
+        /// <summary>
+        /// Перейти к окну добавления фильма
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void FromMenuToAddFilm(object sender, RoutedEventArgs e)
         {
-            MainMenuGrid.Visibility = Visibility.Hidden;
+            PosterGrid.Visibility = Visibility.Hidden;
             FilmAddGrid.Visibility = Visibility.Visible;
         }
 
+        /// <summary>
+        /// Выйти от создания фильма к списку фильмов
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void FromAddFilmToManu(object sender, RoutedEventArgs e)
         {
-            MainMenuGrid.Visibility = Visibility.Visible;
+            PosterGrid.Visibility = Visibility.Visible;
             FilmAddGrid.Visibility = Visibility.Hidden;
         }
 
+        /// <summary>
+        /// Добавить постер к новому фильму
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void AddPosterNewFilm(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -606,7 +662,12 @@ namespace Cinema
 
             }
         }
-        string posterWay;
+        
+        /// <summary>
+        /// Добавить новый фильм
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void AddNewFilm(object sender, RoutedEventArgs e)
         {
             
@@ -629,7 +690,7 @@ namespace Cinema
                     Date_end = NewFilmDateEndDatePicker.SelectedDate,
                     Duration = new TimeSpan(int.Parse(NewFilmDurationHourTextBox.Text), int.Parse(NewFilmDurationMinuteTextBox.Text), 0),
                     Description = NewFilmDescriptionTextBox.Text,
-                    Poster = ImageToByteArray(System.Drawing.Image.FromFile(posterWay))
+                    Poster = ImageWork.ImageToByteArray(System.Drawing.Image.FromFile(posterWay))
                 };
                 using (var db = new CinemaEntities())
                 {
@@ -640,22 +701,9 @@ namespace Cinema
                 LoadPosters();
             }
             FilmAddGrid.Visibility = Visibility.Hidden;
-            MainMenuGrid.Visibility = Visibility.Visible;
+            PosterGrid.Visibility = Visibility.Visible;
         }
-
-        private void PosterScrollViewer_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            if (((ScrollViewer)sender).Visibility == Visibility.Visible)
-            {
-                LoadPosters();
-                if (user != null && user.Role == role.Admin) AddNewFilmButton.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                AddNewFilmButton.Visibility = Visibility.Hidden;
-            }
-        }
-
+      
         private void FilmAddGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             NewFilmNameTextBox.Text = "";
@@ -667,20 +715,36 @@ namespace Cinema
             NewFilmPosterLabel.Background = null;
         }
 
+        /// <summary>
+        /// Перейти к окну просмаотра пользователей
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoToUsersRoleGrid(object sender, RoutedEventArgs e)
         {
-            MainMenuGrid.Visibility = Visibility.Hidden;
+            lastGrid = (Grid)((Button)sender).Parent;
+            lastGrid.Visibility = Visibility.Hidden;
             UsersRoleGrid.Visibility = Visibility.Visible;
             LoadUsersRole();
         }
 
+        /// <summary>
+        /// Выйти из окна просмотра пользователей
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoBackFromUsersRoleGrid(object sender, RoutedEventArgs e)
         {
-            MainMenuGrid.Visibility = Visibility.Visible;
+            lastGrid.Visibility = Visibility.Visible;
             UsersRoleGrid.Visibility = Visibility.Hidden;
             if (user.Role != role.Admin) ChangeVisibilityAdminButtons(Visibility.Hidden);
         }
 
+        /// <summary>
+        /// Нажата одна из 2х кнопок изменения прав пользователя 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ChangeUserRole(object sender, RoutedEventArgs e)
         {
             if ((Button)sender == ChangeRoleOnAdminButton) ChangeUserRole(role.Admin);
@@ -688,6 +752,10 @@ namespace Cinema
             LoadUsersRole();
         }
 
+        /// <summary>
+        /// изменение роли
+        /// </summary>
+        /// <param name="role"></param>
         private void ChangeUserRole(string role)
         {
             UserRole userRole = new UserRole();
@@ -708,12 +776,50 @@ namespace Cinema
             }
         }
 
+        /// <summary>
+        /// Изменить видимость пользовательских кнопок
+        /// </summary>
+        void ChangeVisibilityUserButtons()
+        {
+            Visibility visibility1;
+            Visibility visibility2;
+            if (user != null)
+            {
+                visibility1 = Visibility.Visible;
+                visibility2 = Visibility.Hidden;
+                UserButton.Content = user.Last_name + " " + user.First_name;
+                UserButton2.Content = UserButton.Content;
+                if (user.Role == role.Admin)
+                {
+                    ChangeVisibilityAdminButtons(Visibility.Visible);
+                }
+            }
+            else
+            {
+                visibility1 = Visibility.Hidden;
+                visibility2 = Visibility.Visible;
+                ChangeVisibilityAdminButtons(Visibility.Hidden);
+            }
+            UserButton.Visibility = visibility1;
+            UserButton2.Visibility = visibility1;
+            AuthUserButton.Visibility = visibility2;
+            AuthUserButton2.Visibility = visibility2;
+        }
+        
+        /// <summary>
+        /// Изменить видимость кнопок администратора
+        /// </summary>
+        /// <param name="visibility"></param>
         private void ChangeVisibilityAdminButtons(Visibility visibility)
         {
             AddNewFilmButton.Visibility = visibility;
             UsersRoleButton.Visibility = visibility;
             SessionSetupButton.Visibility = visibility;
         }
+        
+        /// <summary>
+        /// Вывести всех пользователей и их права
+        /// </summary>
         private void LoadUsersRole()
         {
             using (var db = new CinemaEntities())
@@ -723,12 +829,20 @@ namespace Cinema
             }
         }
 
+        /// <summary>
+        /// Перейти к настройке сеансов
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SessionSetupButton_Click(object sender, RoutedEventArgs e)
         {
-            MainMenuGrid.Visibility = Visibility.Hidden;
+            FilmInformationGrid.Visibility = Visibility.Hidden;
             SessionSetupGrid.Visibility = Visibility.Visible;
         }
         
+        /// <summary>
+        /// вывести сессии в окне настроек сессий
+        /// </summary>
         private void LoadSessions()
         {
             ListSessions = new List<Sessions>();
@@ -743,12 +857,22 @@ namespace Cinema
             SessionsDataGrid.ItemsSource = ListSessions;
         }
 
+        /// <summary>
+        /// выйти с настроек сеанса
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoBackFromSessionSetup(object sender, RoutedEventArgs e)
         {
-            MainMenuGrid.Visibility = Visibility.Visible;
+            FilmInformationGrid.Visibility = Visibility.Visible;
             SessionSetupGrid.Visibility = Visibility.Hidden;
         }
 
+        /// <summary>
+        /// Перейти к экрану 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoToAddSessionGrid(object sender, RoutedEventArgs e)
         {
             AddSessionGrid.Visibility = Visibility.Visible;
@@ -756,12 +880,22 @@ namespace Cinema
             LoadSessions();
         }
 
+        /// <summary>
+        /// Покинуть окно добавления сеанса
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GoOutFromAddSessionGrid(object sender, RoutedEventArgs e)
         {
             AddSessionGrid.Visibility = Visibility.Hidden;
             SessionSetupGrid.Visibility = Visibility.Visible;
         }
 
+        /// <summary>
+        /// Добавить сессию
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void AddSessionButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -783,6 +917,7 @@ namespace Cinema
                 using (var db = new CinemaEntities())
                 {
                     db.Sessions.Add(sessions);
+                    db.SaveChanges();
                     var places = from f in db.Places where f.Hall == hall select f;
                     foreach(var place in places)
                     {
@@ -795,12 +930,12 @@ namespace Cinema
                     }
                     db.SaveChanges();
                 }
-                MessageBox.Show("сеанс предварительно добавлен");
+                MessageBox.Show("Сеанс добавлен");
                 AddSessionGrid.Visibility = Visibility.Hidden;
                 SessionSetupGrid.Visibility = Visibility.Visible;
 
             }
-            catch (ArgumentException)
+            catch (FormatException)
             {
                 MessageBox.Show("Неверная цена", Error);
             }
@@ -887,6 +1022,7 @@ namespace Cinema
                             {
                                 Time = f.Session_time.Hour.ToString() + ":" + f.Session_time.Minute.ToString(),
                                 Price = f.Price,
+                                Hall = f.Halls.Hall_number,
                                 sessionId = f.Session_id
                             };
                     FilmInformationSessionDataGrid.ItemsSource = s.ToList();
@@ -897,6 +1033,51 @@ namespace Cinema
         private void SessionSetupGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (SessionsDataGrid.Visibility == Visibility.Visible) LoadSessions();
+        }
+
+        private void FilmInformationGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            FilmInformationPosterImage.Source = ImageWork.ByteArrayToImage(film.Poster);
+            FilmInformationNameTextBlock.Text = film.Film_name;
+            FilmInformationDurationLabel.Content = film.Duration;
+            FilmInformationDescriptionTextBlock.Text = film.Description;
+        }
+
+        /// <summary>
+        /// Удалить сеанс
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DeleteSessionButton_Click(object sender, RoutedEventArgs e)
+        {
+            Sessions ses = (Sessions)SessionsDataGrid.SelectedValue;
+            
+            using(var db = new CinemaEntities())
+            {
+                if ((db.IsTicketsOnSessionBought(ses.Session_id)).Count() != 0) MessageBox.Show("Нельзя удалить сеанс, когда на него уже куплены билеты");
+                else
+                {
+                    MessageBoxResult messageBoxResult = MessageBox.Show("Удалить выбранные сеанс?", "Внимание!", MessageBoxButton.YesNo);
+                    if (messageBoxResult == MessageBoxResult.Yes)
+                    {
+                        var t = from f in db.Tickets where f.Session == ses.Session_id select f;
+                        foreach(var ticket in t)
+                        {
+                            db.Tickets.Remove(ticket);
+                        }
+                        var s = from f in db.Sessions where f.Session_id == ses.Session_id select f;
+                        Sessions sessions = new Sessions();
+                        foreach(var s1 in s)
+                        {
+                            sessions = s1;
+                        }
+                        db.Sessions.Remove(sessions);
+                        db.SaveChanges();
+                        MessageBox.Show("Сеанс удален");
+                        LoadSessions();
+                    }
+                }
+            }
         }
     }
 

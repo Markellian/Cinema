@@ -263,6 +263,9 @@
         <Function Name="GetPursheDetails" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="user" Type="nvarchar" Mode="In" />
         </Function>
+        <Function Name="IsTicketsOnSessionBought" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="Session" Type="int" Mode="In" />
+        </Function>
         <EntityContainer Name="Хранилище CinemaModelContainer">
           <EntitySet Name="Cinemas" EntityType="Self.Cinemas" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Films" EntityType="Self.Films" Schema="dbo" store:Type="Tables" />
@@ -638,6 +641,9 @@
           <FunctionImport Name="GetPursheDetails" ReturnType="Collection(CinemaModel.GetPursheDetails_Result)">
             <Parameter Name="user" Mode="In" Type="String" />
           </FunctionImport>
+          <FunctionImport Name="IsTicketsOnSessionBought" ReturnType="Collection(CinemaModel.IsTicketsOnSessionBought_Result)">
+            <Parameter Name="Session" Mode="In" Type="Int32" />
+          </FunctionImport>
         </EntityContainer>
         <ComplexType Name="GetFreeHalls_Result">
           <Property Type="Int32" Name="Hall_id" Nullable="false" />
@@ -658,6 +664,13 @@
           <Property Type="Int32" Name="Place_number" Nullable="false" />
           <Property Type="Int32" Name="Row_number" Nullable="false" />
           <Property Type="String" Name="Film_name" Nullable="false" MaxLength="50" />
+        </ComplexType>
+        <ComplexType Name="IsTicketsOnSessionBought_Result">
+          <Property Type="Int32" Name="Ticket_id" Nullable="false" />
+          <Property Type="Int32" Name="Session" Nullable="false" />
+          <Property Type="Int32" Name="Place" Nullable="false" />
+          <Property Type="Int32" Name="Purchase" Nullable="false" />
+          <Property Type="Int32" Name="Ticket" Nullable="false" />
         </ComplexType>
       </Schema>
     </edmx:ConceptualModels>
@@ -808,6 +821,17 @@
                 <ScalarProperty Name="Place_number" ColumnName="Place_number" />
                 <ScalarProperty Name="Row_number" ColumnName="Row_number" />
                 <ScalarProperty Name="Film_name" ColumnName="Film_name" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="IsTicketsOnSessionBought" FunctionName="Хранилище CinemaModel.IsTicketsOnSessionBought">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CinemaModel.IsTicketsOnSessionBought_Result">
+                <ScalarProperty Name="Ticket_id" ColumnName="Ticket_id" />
+                <ScalarProperty Name="Session" ColumnName="Session" />
+                <ScalarProperty Name="Place" ColumnName="Place" />
+                <ScalarProperty Name="Purchase" ColumnName="Purchase" />
+                <ScalarProperty Name="Ticket" ColumnName="Ticket" />
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>

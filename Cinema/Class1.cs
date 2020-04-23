@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace Cinema
 {
@@ -13,7 +11,7 @@ namespace Cinema
     {
         public Films film;
         public Grid Poster;
-    } 
+    }
     public class RoleName//Соответствует данным таблицы Roles
     {
         public string Admin = "Админ";
@@ -23,6 +21,7 @@ namespace Cinema
     {
         public string Time { get; set; }
         public decimal? Price { get; set; }
+        public int Hall { get; set; }
         public int sessionId;
     }
     public class Place

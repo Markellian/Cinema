@@ -31,51 +31,55 @@
             <Button Content="Зарегистрироваться" FontSize="20" HorizontalAlignment="Left" Margin="307,352,0,0" VerticalAlignment="Top" Width="213" Grid.ColumnSpan="2" Click="RegistrationUserButton_Click"/>
             <Button Content="Назад" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="BackToAuth"/>
         </Grid>
-        <Grid x:Name="MainMenuGrid" Visibility="Visible">
+
+        <Grid x:Name="ListPosterGrid" Visibility="Visible">
             <Label Content="Киноафиша" VerticalAlignment="Top" Height="80" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="30" Background="BlueViolet" FontFamily="Lucida Handwriting" Margin="0,0,-0.4,0"/>
             <Button x:Name="AuthUserButton" Visibility="Visible" IsEnabled="True" Content="Войти" HorizontalAlignment="Left" Margin="697,10,0,0" VerticalAlignment="Top" Width="87" Background="White" Click="GoToAuthButton_Click"/>
             <Button x:Name="UserButton" Click="UserButton_Click" Content="" Visibility="Hidden" HorizontalAlignment="Right" Margin="0,10,10,0" VerticalAlignment="Top"/>
-            <Button Visibility="Hidden" x:Name="GoToPostersGridButton" Content="Назад" HorizontalAlignment="Left" Margin="10,15,0,0" VerticalAlignment="Top" Width="56" Click="GoToPosterGrid"/>
-            <ScrollViewer x:Name="PosterScrollViewer" Margin="0,110,-0.4,10" IsVisibleChanged="PosterScrollViewer_IsVisibleChanged">
+            <ScrollViewer Margin="0,85,-0.4,0">
                 <Grid x:Name="PosterGrid"/>
             </ScrollViewer>
-            <ScrollViewer Visibility="Hidden" x:Name="FilmInformationScrollViewer" Margin="0,85,-0.4,20">
-                <Grid x:Name="FilmInformationGrid">
-                    <Image Stretch="Fill" x:Name="FilmInformationPosterImage" HorizontalAlignment="Left" Height="176" Margin="25,39,0,0" VerticalAlignment="Top" Width="135"/>
-                    <TextBlock x:Name="FilmInformationNameTextBlock" FontSize="26" TextAlignment="Center" HorizontalAlignment="Left" Margin="190,25,0,0" TextWrapping="Wrap" Text="Низвание фильма" VerticalAlignment="Top" Height="44" Width="546"/>
-                    <Label Content="Длительность: " FontSize="18" HorizontalAlignment="Left" Margin="190,92,0,0" VerticalAlignment="Top"/>
-                    <Label x:Name="FilmInformationDurationLabel" Content="" FontSize="18" HorizontalAlignment="Left" Margin="328,92,0,0" VerticalAlignment="Top"/>
-                    <TextBlock x:Name="FilmInformationDescriptionTextBlock" FontSize="14" HorizontalAlignment="Left" Margin="190,131,0,0" TextWrapping="Wrap" Text="Информация о фильме" VerticalAlignment="Top" Height="70" Width="546"/>
-                    <DataGrid Margin="0,236,-0.2,0" Name="FilmInformationSessionDataGrid" MaxHeight="300" AutoGenerateColumns="False" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Время" Binding="{Binding Path=Time}" Width="0.2*"/>
-                            <DataGridTextColumn Header="Цена" Binding="{Binding Path=Price}" Width="*"/>
-                            <DataGridTemplateColumn Header="Купить" CellTemplate="{StaticResource BuyButton}" Width="0.2*"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                    <Button x:Name="SessionSetupButton" Visibility="Hidden" Content="Настройка сеансов" HorizontalAlignment="Left" Margin="654,6,0,0" VerticalAlignment="Top" Width="113" Click="SessionSetupButton_Click"/>
-
-                    <DatePicker SelectedDateChanged="DatePicker_SelectedDateChanged" HorizontalAlignment="Left" Margin="190,206,0,0" VerticalAlignment="Top"/>
-                </Grid>
-            </ScrollViewer>
-            <Grid x:Name="PlacesGrid" Visibility="Hidden" Margin="0,0,-0.4,0" Background="Black">
-                <Label Content="Выбранные билеты:" FontSize="20" Foreground="White" HorizontalAlignment="Left" Margin="513,10,0,0" VerticalAlignment="Top" Height="37" Width="200"/>
-                <ScrollViewer Margin="513,47,81,103">
-                    <TextBlock FontSize="18" Foreground="White" x:Name="ListChoosedPlacesTextBlock" TextWrapping="Wrap"/>
-                </ScrollViewer>
-                <Label x:Name="AmountLabel" Content="0" HorizontalContentAlignment="Left" Foreground="White" FontSize="18" HorizontalAlignment="Left" Margin="586,322,0,0" VerticalAlignment="Top" Width="109"/>
-                <Label Content="Сумма:" Foreground="White" FontSize="18" HorizontalContentAlignment="Right" HorizontalAlignment="Left" Margin="513,322,0,0" VerticalAlignment="Top" Width="68"/>
-                <Button Content="Назад" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="50" Click="GoToFilmInformation"/>
-                <Button Content="Купить" FontSize="17" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Left" Margin="328,385,0,0" VerticalAlignment="Top" Width="125" Height="25" Click="GoToPayTickets"/>
-
-            </Grid>
-            <Button x:Name="AddNewFilmButton" Content="Добавить" Visibility="Hidden" HorizontalAlignment="Right" Margin="709,85,10,0" VerticalAlignment="Top" Width="75" Click="FromMenuToAddFilm"/>
+            <Button x:Name="AddNewFilmButton" Content="Добавить" Visibility="Hidden" HorizontalAlignment="Right" Margin="0,59,9.6,0" VerticalAlignment="Top" Width="87" Click="FromMenuToAddFilm"/>
             <Button x:Name="UsersRoleButton" Visibility="Hidden" Content="Пользователи" HorizontalAlignment="Right" Margin="0,35,10,0" VerticalAlignment="Top" Width="87" Click="GoToUsersRoleGrid"/>
+        </Grid>
+        <Grid x:Name="FilmInformationGrid" Visibility="Hidden" IsVisibleChanged="FilmInformationGrid_IsVisibleChanged">
+            <Label Content="Расписание сеансов" VerticalAlignment="Top" Height="80" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="30" Background="BlueViolet" FontFamily="Lucida Handwriting" Margin="0,0,-0.4,0"/>
+            <Button Visibility="Visible" x:Name="GoToPostersGridButton" Content="Назад" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="56" Click="GoToPosterGrid"/>
+
+            <Image Stretch="Fill" x:Name="FilmInformationPosterImage" HorizontalAlignment="Left" Height="176" Margin="23,134,0,0" VerticalAlignment="Top" Width="135"/>
+            <TextBlock x:Name="FilmInformationNameTextBlock" FontSize="26" TextAlignment="Center" Margin="0,80,-0.4,0" TextWrapping="Wrap" Text="Название фильма" VerticalAlignment="Top"/>
+            <Label Content="Длительность: " FontSize="18" HorizontalAlignment="Left" Margin="180,134,0,0" VerticalAlignment="Top"/>
+            <Label x:Name="FilmInformationDurationLabel" Content="" FontSize="18" HorizontalAlignment="Left" Margin="318,134,0,0" VerticalAlignment="Top"/>
+            <TextBlock x:Name="FilmInformationDescriptionTextBlock" FontSize="14" HorizontalAlignment="Left" Margin="180,172,0,0" TextWrapping="Wrap" Text="Информация о фильме" VerticalAlignment="Top" Height="110" Width="604"/>
+            <DataGrid Margin="0,315,-0.2,0" Name="FilmInformationSessionDataGrid" MaxHeight="300" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Время" Binding="{Binding Path=Time}" Width="0.2*"/>
+                    <DataGridTextColumn Header="Цена" Binding="{Binding Path=Price}" Width="*"/>
+                    <DataGridTextColumn Header="Номер зала" Binding="{Binding Path=Hall}" Width="0.2*"/>
+                    <DataGridTemplateColumn Header="Купить" CellTemplate="{StaticResource BuyButton}" Width="0.2*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <Button x:Name="SessionSetupButton" Visibility="Hidden" Content="Настройка сеансов" HorizontalAlignment="Left" Margin="671,56,0,0" VerticalAlignment="Top" Width="113" Click="SessionSetupButton_Click"/>
+            <Button x:Name="UsersRoleButton2" Visibility="Hidden" Content="Пользователи" HorizontalAlignment="Right" Margin="0,35,10,0" VerticalAlignment="Top" Width="87" Click="GoToUsersRoleGrid"/>
+            <Button x:Name="AuthUserButton2" Visibility="Visible" IsEnabled="True" Content="Войти" HorizontalAlignment="Left" Margin="697,10,0,0" VerticalAlignment="Top" Width="87" Background="White" Click="GoToAuthButton_Click"/>
+            <Button x:Name="UserButton2" Click="UserButton_Click" Content="" Visibility="Hidden" HorizontalAlignment="Right" Margin="0,10,10,0" VerticalAlignment="Top"/>
+            <DatePicker SelectedDateChanged="DatePicker_SelectedDateChanged" HorizontalAlignment="Left" Margin="180,287,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.397,0.466"/>
+        </Grid>
+
+        <Grid x:Name="PlacesGrid" Visibility="Hidden" Margin="0,0,-0.4,0" Background="Black">
+            <Label Content="Выбранные билеты:" FontSize="20" Foreground="White" HorizontalAlignment="Left" Margin="513,10,0,0" VerticalAlignment="Top" Height="37" Width="200"/>
+            <ScrollViewer Margin="513,47,81,103">
+                <TextBlock FontSize="18" Foreground="White" x:Name="ListChoosedPlacesTextBlock" TextWrapping="Wrap"/>
+            </ScrollViewer>
+            <Label x:Name="AmountLabel" Content="0" HorizontalContentAlignment="Left" Foreground="White" FontSize="18" HorizontalAlignment="Left" Margin="586,322,0,0" VerticalAlignment="Top" Width="109"/>
+            <Label Content="Сумма:" Foreground="White" FontSize="18" HorizontalContentAlignment="Right" HorizontalAlignment="Left" Margin="513,322,0,0" VerticalAlignment="Top" Width="68"/>
+            <Button Content="Назад" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="50" Click="GoToFilmInformationFromChoosePlaces"/>
+            <Button Content="Купить" FontSize="17" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Left" Margin="328,385,0,0" VerticalAlignment="Top" Width="125" Height="25" Click="GoToPayTickets"/>
 
         </Grid>
         <Grid x:Name="AuthGrid" Visibility="Hidden" Background="White" IsVisibleChanged="AuthGrid_IsVisibleChanged">
             <Label Content="Авторизация" FontSize="40" HorizontalAlignment="Left" Margin="263,56,0,0" VerticalAlignment="Top" />
-            <Button Content="Назад" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="BackToMainMenu"/>
+            <Button Content="Назад" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="BackFromAuth"/>
             <TextBox x:Name="AuthLoginTextBox" HorizontalAlignment="Left" FontSize="20" Height="37" Margin="334,166,0,0" TextWrapping="Wrap"  VerticalAlignment="Top" Width="179"/>
             <Label Content="Логин" FontSize="20" HorizontalAlignment="Left" Margin="263,166,0,0" VerticalAlignment="Top"/>
             <Label Content="Пароль" FontSize="20" HorizontalAlignment="Left" Margin="250,208,0,0" VerticalAlignment="Top"/>
@@ -166,6 +170,7 @@
                 </DataGrid.Columns>
             </DataGrid>
             <Button Content="Добавить" HorizontalAlignment="Left" Margin="668,147,0,0" VerticalAlignment="Top" Width="116" Click="GoToAddSessionGrid"/>
+            <Button Content="Удалить" HorizontalAlignment="Left" Margin="668,171,0,0" VerticalAlignment="Top" Width="116" Click="DeleteSessionButton_Click"/>
 
         </Grid>
         <Grid x:Name="AddSessionGrid" Background="White" IsVisibleChanged="AddSessionGrid_IsVisibleChanged" Visibility="Hidden">
@@ -181,7 +186,7 @@
             <Label Content="Номер зала:" FontSize="20" HorizontalAlignment="Left" Margin="274,263,0,0" VerticalAlignment="Top"/>
             <ComboBox x:Name="AddSessionHallComboBox" ItemsSource="{Binding Path=Hall_number}" SelectionChanged="AddSessionHallComboBox_SelectionChanged" IsEnabled="False" HorizontalAlignment="Left" FontSize="20" Margin="401,267,0,0" VerticalAlignment="Top" Width="120"/>
             <Button Content="Назад" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="GoOutFromAddSessionGrid"/>
-            <Button x:Name="AddSessionButton" Content="Добавить" IsEnabled="False" FontSize="20" HorizontalAlignment="Center" Margin="349,371,353.6,0" VerticalAlignment="Top"  Click="AddSessionButton_Click"/>
+            <Button x:Name="AddSessionButton" Content="Добавить" IsEnabled="False" FontSize="20" HorizontalAlignment="Center" Margin="349,371,325.6,0" VerticalAlignment="Top"  Click="AddSessionButton_Click" Width="119"/>
             <Button x:Name="AddSessionSeeFreeHallsButton" IsEnabled="False" Content="Посмореть свободные залы" FontSize="14" HorizontalAlignment="Center" Margin="306,221,303.6,0" VerticalAlignment="Top" Click="AddSessionSeeFreeHallsButton_Click" />
             <Label Content="Цена билета:" FontSize="20" HorizontalAlignment="Left" Margin="266,309,0,0" VerticalAlignment="Top"/>
             <TextBox x:Name="AddSessionPriceTextBox" HorizontalAlignment="Left" FontSize="20" Margin="401,313,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
