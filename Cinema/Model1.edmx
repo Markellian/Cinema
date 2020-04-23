@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema Namespace="Хранилище CinemaModel" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+      <Schema Namespace="Хранилище CinemaModel" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Cinemas">
           <Key>
             <PropertyRef Name="Cinema_id" />
@@ -252,8 +252,10 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Function Name="GetLastPurchase" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-          <Parameter Name="user" Type="nvarchar" Mode="In" />
+        <Function Name="GetFreeHalls" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="cinema" Type="int" Mode="In" />
+          <Parameter Name="film" Type="int" Mode="In" />
+          <Parameter Name="datetime" Type="datetime" Mode="In" />
         </Function>
         <Function Name="GetPlaces" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="s" Type="int" Mode="In" />
@@ -323,7 +325,8 @@
             <End Role="Users" EntitySet="Users" />
           </AssociationSet>
         </EntityContainer>
-      </Schema></edmx:StorageModels>
+      </Schema>
+    </edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="CinemaModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -624,16 +627,22 @@
             <End Role="Purchases" EntitySet="Purchases" />
             <End Role="Tickets" EntitySet="Tickets" />
           </AssociationSet>
-          <FunctionImport Name="GetLastPurchase" ReturnType="Collection(Int32)">
-          <Parameter Name="user" Mode="In" Type="String" />
+          <FunctionImport Name="GetFreeHalls" ReturnType="Collection(CinemaModel.GetFreeHalls_Result)">
+            <Parameter Name="cinema" Mode="In" Type="Int32" />
+            <Parameter Name="film" Mode="In" Type="Int32" />
+            <Parameter Name="datetime" Mode="In" Type="DateTime" />
           </FunctionImport>
           <FunctionImport Name="GetPlaces" ReturnType="Collection(CinemaModel.GetPlaces_Result)">
-          <Parameter Name="s" Mode="In" Type="Int32" />
+            <Parameter Name="s" Mode="In" Type="Int32" />
           </FunctionImport>
           <FunctionImport Name="GetPursheDetails" ReturnType="Collection(CinemaModel.GetPursheDetails_Result)">
-          <Parameter Name="user" Mode="In" Type="String" />
+            <Parameter Name="user" Mode="In" Type="String" />
           </FunctionImport>
         </EntityContainer>
+        <ComplexType Name="GetFreeHalls_Result">
+          <Property Type="Int32" Name="Hall_id" Nullable="false" />
+          <Property Type="Int32" Name="Hall_number" Nullable="false" />
+        </ComplexType>
         <ComplexType Name="GetPlaces_Result">
           <Property Type="Int32" Name="Ticket_id" Nullable="false" />
           <Property Type="Int32" Name="Place_number" Nullable="false" />
@@ -642,7 +651,7 @@
         </ComplexType>
         <ComplexType Name="GetPursheDetails_Result">
           <Property Type="Int32" Name="Purchase_id" Nullable="false" />
-          <Property Type="DateTime" Name="Purchase_date" Nullable="false" />
+          <Property Type="DateTime" Name="Purchase_date" Nullable="false" Precision="23" />
           <Property Type="DateTime" Name="Session_time" Nullable="false" Precision="23" />
           <Property Type="Decimal" Name="Price" Nullable="false" Precision="19" />
           <Property Type="Int32" Name="Hall" Nullable="false" />
@@ -770,7 +779,14 @@
               <ScalarProperty Name="Ticket_id" ColumnName="Ticket" />
             </EndProperty>
           </AssociationSetMapping>
-          <FunctionImportMapping FunctionImportName="GetLastPurchase" FunctionName="Хранилище CinemaModel.GetLastPurchase" />
+          <FunctionImportMapping FunctionImportName="GetFreeHalls" FunctionName="Хранилище CinemaModel.GetFreeHalls">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CinemaModel.GetFreeHalls_Result">
+                <ScalarProperty Name="Hall_id" ColumnName="Hall_id" />
+                <ScalarProperty Name="Hall_number" ColumnName="Hall_number" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
           <FunctionImportMapping FunctionImportName="GetPlaces" FunctionName="Хранилище CinemaModel.GetPlaces">
             <ResultMapping>
               <ComplexTypeMapping TypeName="CinemaModel.GetPlaces_Result">

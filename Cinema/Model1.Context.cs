@@ -39,13 +39,21 @@ namespace Cinema
         public virtual DbSet<Type_place> Type_place { get; set; }
         public virtual DbSet<Users> Users { get; set; }
     
-        public virtual ObjectResult<Nullable<int>> GetLastPurchase(string user)
+        public virtual ObjectResult<GetFreeHalls_Result> GetFreeHalls(Nullable<int> cinema, Nullable<int> film, Nullable<System.DateTime> datetime)
         {
-            var userParameter = user != null ?
-                new ObjectParameter("user", user) :
-                new ObjectParameter("user", typeof(string));
+            var cinemaParameter = cinema.HasValue ?
+                new ObjectParameter("cinema", cinema) :
+                new ObjectParameter("cinema", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<Nullable<int>>("GetLastPurchase", userParameter);
+            var filmParameter = film.HasValue ?
+                new ObjectParameter("film", film) :
+                new ObjectParameter("film", typeof(int));
+    
+            var datetimeParameter = datetime.HasValue ?
+                new ObjectParameter("datetime", datetime) :
+                new ObjectParameter("datetime", typeof(System.DateTime));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<GetFreeHalls_Result>("GetFreeHalls", cinemaParameter, filmParameter, datetimeParameter);
         }
     
         public virtual ObjectResult<GetPlaces_Result> GetPlaces(Nullable<int> s)

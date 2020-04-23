@@ -17,7 +17,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Drawing.Imaging;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 //using Image = System.Windows.Controls.Image;
@@ -29,26 +28,30 @@ namespace Cinema
     /// </summary>
     public partial class MainWindow : Window
     {
-        public const string Error = "Ошибка!"; //Заголовок для MessageBox
-        List<PosterClass> PostersList = new List<PosterClass>();
-
-        RoleName role = new RoleName(); //для указаная роли для посетителей при регистрации
-        Users user;
-        Films film;
-        List<GetPlaces_Result> ListPlacesToBuy = new List<GetPlaces_Result>();//места, выбранные для покупки
-        decimal price = 0;//цена 1 билета
-        decimal AmountTickets = 0;//цена всех выбранных билетов
-        List<Place> listPlaces;//места на сеансе
+        private const string Error = "Ошибка!"; //Заголовок для MessageBox
+        private List<PosterClass> PostersList = new List<PosterClass>();
+        readonly RoleName role = new RoleName(); //для указаная роли для посетителей при регистрации
+        private Users user;
+        private Films film;
+        private Cinemas Cinema;
+        private List<GetPlaces_Result> ListPlacesToBuy = new List<GetPlaces_Result>();//места, выбранные для покупки
+        private List<GetFreeHalls_Result> ListHalls;
+        private List<Sessions> ListSessions;
+        private decimal price = 0;//цена 1 билета
+        private decimal AmountTickets = 0;//цена всех выбранных билетов
+        private List<Place> listPlaces;//места на сеансе
+        private readonly string reg2 = @"\d\d";
+        private readonly string reg1 = @"\d";
+        private DateTime dateTime;
         public MainWindow()
         {
             InitializeComponent();
             LoadPosters();
             using (var db = new CinemaEntities())
             {
-                var k = from f in db.Films where f.Film_id == 1 select f;
-                foreach (var k1 in k) film = k1;
+                var c = from f in db.Cinemas where f.Cinema_id == 1 select f;
+                foreach (var c1 in c) Cinema = c1;
             }
-            LoadSessions();
         }
         /// <summary>
         /// Загрузка постеров фильмов на главный экран
@@ -72,7 +75,7 @@ namespace Cinema
                     {
                         Width = 150,
                         Height = 200,
-                        Source = byteArrayToImage(v.Poster),
+                        Source = ByteArrayToImage(v.Poster),
                         Margin = new Thickness(0, 0, 0, 0),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top,
@@ -108,9 +111,11 @@ namespace Cinema
                     PosterGrid.Children.Add(grid);
                     //PosterGrid.Children.Add(image);
                     //PosterGrid.Children.Add(textBlock);
-                    PosterClass pp = new PosterClass();
-                    pp.film = v;
-                    pp.Poster = grid;
+                    PosterClass pp = new PosterClass
+                    {
+                        film = v,
+                        Poster = grid
+                    };
                     PostersList.Add(pp);
 
                 }
@@ -136,20 +141,10 @@ namespace Cinema
             PosterScrollViewer.Visibility = Visibility.Hidden;
             FilmInformationScrollViewer.Visibility = Visibility.Visible;
             GoToPostersGridButton.Visibility = Visibility.Visible;
-            FilmInformationPosterImage.Source = byteArrayToImage(film.Poster);
+            FilmInformationPosterImage.Source = ByteArrayToImage(film.Poster);
             FilmInformationNameTextBlock.Text = film.Film_name;
             FilmInformationDurationLabel.Content = film.Duration;
-            FilmInformationDescriptionTextBlock.Text = film.Description;
-
-            using (var db = new CinemaEntities())
-            {
-                var s = from f in db.Sessions where f.Film == film.Film_id select new Session {
-                    Time = f.Session_time.Hour.ToString() + ":" + f.Session_time.Minute.ToString(),
-                    Price = f.Price,
-                    sessionId = f.Session_id
-                };
-                FilmInformationSessionDataGrid.ItemsSource = s.ToList();
-            }
+            FilmInformationDescriptionTextBlock.Text = film.Description;            
         }
         /// <summary>
         /// Возвращение основных цветов при покидании курсором постера
@@ -241,7 +236,7 @@ namespace Cinema
         /// </summary>
         /// <param name="byteArrayIn"></param>
         /// <returns></returns>
-        public BitmapImage byteArrayToImage(byte[] byteArrayIn)
+        public BitmapImage ByteArrayToImage(byte[] byteArrayIn)
         {
             var bitmap = new BitmapImage();
             bitmap.BeginInit();
@@ -557,6 +552,8 @@ namespace Cinema
                 PayGrid.Visibility = Visibility.Hidden;
                 PosterScrollViewer.Visibility = Visibility.Visible;
                 PlacesGrid.Visibility = Visibility.Hidden;
+                FilmInformationScrollViewer.Visibility = Visibility.Hidden;
+                GoToPostersGridButton.Visibility = Visibility.Hidden;
                 MainMenuGrid.Visibility = Visibility.Visible;
             }
         }
@@ -612,8 +609,7 @@ namespace Cinema
         string posterWay;
         private void AddNewFilm(object sender, RoutedEventArgs e)
         {
-            string reg2 = @"\d\d";
-            string reg1 = @"\d";
+            
             if (NewFilmNameTextBox.Text == "") MessageBox.Show("Неверное название фильма", Error);
             else if (NewFilmDateReleaseDatePicker.SelectedDate == null) MessageBox.Show("Укажите дату релиза", Error);
             else if (NewFilmDateEndDatePicker.SelectedDate != null &&
@@ -649,7 +645,15 @@ namespace Cinema
 
         private void PosterScrollViewer_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            LoadPosters();
+            if (((ScrollViewer)sender).Visibility == Visibility.Visible)
+            {
+                LoadPosters();
+                if (user != null && user.Role == role.Admin) AddNewFilmButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                AddNewFilmButton.Visibility = Visibility.Hidden;
+            }
         }
 
         private void FilmAddGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -724,7 +728,7 @@ namespace Cinema
             MainMenuGrid.Visibility = Visibility.Hidden;
             SessionSetupGrid.Visibility = Visibility.Visible;
         }
-        List<Sessions> ListSessions;
+        
         private void LoadSessions()
         {
             ListSessions = new List<Sessions>();
@@ -734,27 +738,165 @@ namespace Cinema
                 foreach (var ses in s)
                 {
                     ListSessions.Add(ses);
-                }
+                }                
             }
             SessionsDataGrid.ItemsSource = ListSessions;
         }
+
         private void GoBackFromSessionSetup(object sender, RoutedEventArgs e)
         {
             MainMenuGrid.Visibility = Visibility.Visible;
             SessionSetupGrid.Visibility = Visibility.Hidden;
         }
 
-        private void SaveSessions(object sender, RoutedEventArgs e)
+        private void GoToAddSessionGrid(object sender, RoutedEventArgs e)
         {
-            var l = SessionsDataGrid.ItemsSource;
-            foreach (var o in l)
+            AddSessionGrid.Visibility = Visibility.Visible;
+            SessionSetupGrid.Visibility = Visibility.Hidden;
+            LoadSessions();
+        }
+
+        private void GoOutFromAddSessionGrid(object sender, RoutedEventArgs e)
+        {
+            AddSessionGrid.Visibility = Visibility.Hidden;
+            SessionSetupGrid.Visibility = Visibility.Visible;
+        }
+
+        private void AddSessionButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
             {
-                var p = 0;
+                decimal r = decimal.Parse(AddSessionPriceTextBox.Text);
+                int hall = int.Parse(AddSessionHallComboBox.Text);
+                foreach (var h in ListHalls) { if (h.Hall_number == hall) hall = h.Hall_id; break; }
+                Sessions sessions = new Sessions()
+                {
+                    Film = film.Film_id,
+                    Hall = hall,
+                    Price = r,
+                    Session_time = dateTime
+                };
+
+                ListSessions.Add(sessions);
+                SessionsDataGrid.ItemsSource = null;
+                SessionsDataGrid.ItemsSource = ListSessions;
+                using (var db = new CinemaEntities())
+                {
+                    db.Sessions.Add(sessions);
+                    var places = from f in db.Places where f.Hall == hall select f;
+                    foreach(var place in places)
+                    {
+                        Tickets tickets = new Tickets()
+                        {
+                            Sessions = sessions,
+                            Places = place
+                        };
+                        db.Tickets.Add(tickets);
+                    }
+                    db.SaveChanges();
+                }
+                MessageBox.Show("сеанс предварительно добавлен");
+                AddSessionGrid.Visibility = Visibility.Hidden;
+                SessionSetupGrid.Visibility = Visibility.Visible;
+
             }
-            using (var db = new CinemaEntities())
+            catch (ArgumentException)
             {
-                db.SaveChanges();
+                MessageBox.Show("Неверная цена", Error);
             }
+
+        }
+
+        private void AddSessionDataPicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (AddSessionDataPicker.SelectedDate != null)
+            {
+                AddSessionHourTextBox.IsEnabled = true;
+                AddSessionMinuteTextBox.IsEnabled = true;
+                AddSessionSeeFreeHallsButton.IsEnabled = true;
+            }
+            else
+            {
+                AddSessionHourTextBox.IsEnabled = false;
+                AddSessionMinuteTextBox.IsEnabled = false;
+                AddSessionSeeFreeHallsButton.IsEnabled = false;
+                AddSessionHallComboBox.IsEnabled = false;
+                AddSessionButton.IsEnabled = false;
+            }
+        }
+
+        private void AddSessionSeeFreeHallsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(Regex.IsMatch(AddSessionHourTextBox.Text, reg2) || Regex.IsMatch(AddSessionHourTextBox.Text, reg1)) ||
+                     !(Regex.IsMatch(AddSessionMinuteTextBox.Text, reg2) || Regex.IsMatch(AddSessionMinuteTextBox.Text, reg1)) ||
+                     int.Parse(AddSessionMinuteTextBox.Text) > 59 ||
+                     int.Parse(AddSessionHourTextBox.Text) >= 24) MessageBox.Show("Неверное время", Error);
+            else
+            {
+                AddSessionHallComboBox.IsEnabled = true;
+                dateTime = (DateTime)AddSessionDataPicker.SelectedDate;
+                dateTime = dateTime.AddHours(double.Parse(AddSessionHourTextBox.Text));
+                dateTime = dateTime.AddMinutes(double.Parse(AddSessionMinuteTextBox.Text));
+                List<int> halls = new List<int>();
+                using (var db = new CinemaEntities())
+                {
+                    ListHalls = db.GetFreeHalls(Cinema.Cinema_id, film.Film_id, dateTime).ToList();
+                    foreach (var h in ListHalls) halls.Add(h.Hall_number);
+                    AddSessionHallComboBox.ItemsSource = halls;
+                }
+            }
+        }
+
+        private void AddSessionHallComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            AddSessionButton.IsEnabled = true;
+        }
+
+        private void AddSessionHourTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            AddSessionButton.IsEnabled = false;
+            AddSessionHallComboBox.IsEnabled = false;
+            AddSessionHallComboBox.ItemsSource = null;
+        }
+
+        private void AddSessionGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (AddSessionGrid.Visibility == Visibility.Visible)
+            {
+                AddSessionFilmNameLabel.Content = film.Film_name;
+                AddSessionDataPicker.SelectedDate = null;
+                AddSessionHourTextBox.Text = "";
+                AddSessionMinuteTextBox.Text = "";
+                AddSessionPriceTextBox.Text = "";
+                AddSessionHallComboBox.ItemsSource = null;
+                AddSessionDataPicker_SelectedDateChanged(null, null);
+            }
+        }
+
+        private void DatePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+        {
+            DateTime? date = ((DatePicker)sender).SelectedDate;
+            if (date == null) FilmInformationSessionDataGrid.ItemsSource = null;
+            else
+            {
+                using (var db = new CinemaEntities())
+                {
+                    var s = from f in db.Sessions
+                            where f.Film == film.Film_id && f.Session_time.Year == ((DateTime)date).Year && f.Session_time.Month == ((DateTime)date).Month && f.Session_time.Day == ((DateTime)date).Day
+                            select new Session
+                            {
+                                Time = f.Session_time.Hour.ToString() + ":" + f.Session_time.Minute.ToString(),
+                                Price = f.Price,
+                                sessionId = f.Session_id
+                            };
+                    FilmInformationSessionDataGrid.ItemsSource = s.ToList();
+                }
+            }
+        }
+
+        private void SessionSetupGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (SessionsDataGrid.Visibility == Visibility.Visible) LoadSessions();
         }
     }
 
