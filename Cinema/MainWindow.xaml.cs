@@ -52,12 +52,9 @@ namespace Cinema
             LoadPosters();
             using (var db = new CinemaEntities())
             {
-                var l = from f in db.Films where f.Film_id == 1 select f;
-                foreach (var t in l) film = t;
                 var c = from f in db.Cinemas where f.Cinema_id == 1 select f;
                 foreach (var c1 in c) Cinema = c1;
             }
-            LoadSessions();
         }
         
         /// <summary>
