@@ -29,22 +29,22 @@ namespace Cinema
     public partial class MainWindow : Window
     {
         private const string Error = "Ошибка!"; //Заголовок для MessageBox
-        private List<PosterClass> PostersList = new List<PosterClass>();
+        private List<PosterClass> PostersList = new List<PosterClass>(); //список постеров
         readonly RoleName role = new RoleName(); //для указаная роли для посетителей при регистрации
-        private WorkWithImage ImageWork = new WorkWithImage();
-        private Users user;
-        private Films film;
-        private Cinemas Cinema;
+        private WorkWithImage ImageWork = new WorkWithImage(); //для работы с классом
+        private Users user; //пользователь, который авторизировался
+        private Films film; //выбранный фильм
+        private Cinemas Cinema; //кинотеатр (пока единственный)
         private List<GetPlaces_Result> ListPlacesToBuy = new List<GetPlaces_Result>();//места, выбранные для покупки
-        private List<GetFreeHalls_Result> ListHalls;
-        private List<Sessions> ListSessions;
+        private List<GetFreeHalls_Result> ListHalls; //список доступных залов
+        private List<Sessions> ListSessions; //список всех сессий на фильм
         private decimal price = 0;//цена 1 билета
         private decimal AmountTickets = 0;//цена всех выбранных билетов
         private List<Place> listPlaces;//места на сеансе
-        private readonly string reg2 = @"\d\d";
-        private readonly string reg1 = @"\d";
-        private DateTime dateTime;
-        string posterWay;
+        private readonly string reg2 = @"\d\d"; //шаблон заполнения полей времени
+        private readonly string reg1 = @"\d"; //шаблон заполнения полей времени
+        private DateTime dateTime; //для создания переменной даты-времени
+        string posterWay; //путь картинки (постера) при добавлении фильма
         private Grid lastGrid; //чтобы возвразаться на последний грид
         public MainWindow()
         {
