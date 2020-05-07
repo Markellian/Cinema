@@ -42,6 +42,7 @@
             <Button x:Name="AddNewFilmButton" Content="Добавить" Visibility="Hidden" HorizontalAlignment="Right" Margin="0,59,9.6,0" VerticalAlignment="Top" Width="87" Click="FromMenuToAddFilm"/>
             <Button x:Name="UsersRoleButton" Visibility="Hidden" Content="Пользователи" HorizontalAlignment="Right" Margin="0,35,10,0" VerticalAlignment="Top" Width="87" Click="GoToUsersRoleGrid"/>
         </Grid>
+
         <Grid x:Name="FilmInformationGrid" Visibility="Hidden" IsVisibleChanged="FilmInformationGrid_IsVisibleChanged">
             <Label Content="Расписание сеансов" VerticalAlignment="Top" Height="80" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="30" Background="BlueViolet" FontFamily="Lucida Handwriting" Margin="0,0,-0.4,0"/>
             <Button Visibility="Visible" x:Name="GoToPostersGridButton" Content="Назад" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="56" Click="GoToPosterGrid"/>
@@ -187,7 +188,7 @@
             <ComboBox x:Name="AddSessionHallComboBox" ItemsSource="{Binding Path=Hall_number}" SelectionChanged="AddSessionHallComboBox_SelectionChanged" IsEnabled="False" HorizontalAlignment="Left" FontSize="20" Margin="401,267,0,0" VerticalAlignment="Top" Width="120"/>
             <Button Content="Назад" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="GoOutFromAddSessionGrid"/>
             <Button x:Name="AddSessionButton" Content="Добавить" IsEnabled="False" FontSize="20" HorizontalAlignment="Center" Margin="349,371,325.6,0" VerticalAlignment="Top"  Click="AddSessionButton_Click" Width="119"/>
-            <Button x:Name="AddSessionSeeFreeHallsButton" IsEnabled="False" Content="Посмореть свободные залы" FontSize="14" HorizontalAlignment="Center" Margin="306,221,303.6,0" VerticalAlignment="Top" Click="AddSessionSeeFreeHallsButton_Click" />
+            <Button x:Name="AddSessionSeeFreeHallsButton" IsEnabled="False" Content="Посмореть свободные залы" FontSize="14" HorizontalAlignment="Center" Margin="290,221,283.6,0" VerticalAlignment="Top" Click="AddSessionSeeFreeHallsButton_Click" Width="220" />
             <Label Content="Цена билета:" FontSize="20" HorizontalAlignment="Left" Margin="266,309,0,0" VerticalAlignment="Top"/>
             <TextBox x:Name="AddSessionPriceTextBox" HorizontalAlignment="Left" FontSize="20" Margin="401,313,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
 

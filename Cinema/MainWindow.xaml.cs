@@ -1,26 +1,15 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
-//using Image = System.Windows.Controls.Image;
-//пара номер 4
+
 namespace Cinema
 {
     /// <summary>
@@ -70,7 +59,7 @@ namespace Cinema
             using (var db = new CinemaEntities())
             {
                 int i = -1;
-                var q = from f in db.Films select f;
+                var q = from f in db.Films where f.Date_end > DateTime.Now select f;
                 foreach (var v in q)
                 {
 
@@ -620,18 +609,18 @@ namespace Cinema
         /// <param name="e"></param>
         private void FromMenuToAddFilm(object sender, RoutedEventArgs e)
         {
-            PosterGrid.Visibility = Visibility.Hidden;
+            ListPosterGrid.Visibility = Visibility.Hidden;
             FilmAddGrid.Visibility = Visibility.Visible;
         }
 
         /// <summary>
         /// Выйти от создания фильма к списку фильмов
         /// </summary>
-        /// <param name="sender"></param>
+        /// <param name="sender"></param>   
         /// <param name="e"></param>
         private void FromAddFilmToManu(object sender, RoutedEventArgs e)
         {
-            PosterGrid.Visibility = Visibility.Visible;
+            ListPosterGrid.Visibility = Visibility.Visible;
             FilmAddGrid.Visibility = Visibility.Hidden;
         }
 
@@ -667,11 +656,10 @@ namespace Cinema
         /// <param name="e"></param>
         private void AddNewFilm(object sender, RoutedEventArgs e)
         {
-            
             if (NewFilmNameTextBox.Text == "") MessageBox.Show("Неверное название фильма", Error);
             else if (NewFilmDateReleaseDatePicker.SelectedDate == null) MessageBox.Show("Укажите дату релиза", Error);
-            else if (NewFilmDateEndDatePicker.SelectedDate != null &&
-                     NewFilmDateReleaseDatePicker.SelectedDate > NewFilmDateEndDatePicker.SelectedDate) MessageBox.Show("Прокат фильма не может закончиться раньше, чем он начнется", Error);
+            else if (NewFilmDateEndDatePicker.SelectedDate == null) MessageBox.Show("Укажите дату окончания проката", Error);
+            else if (NewFilmDateReleaseDatePicker.SelectedDate > NewFilmDateEndDatePicker.SelectedDate) MessageBox.Show("Прокат фильма не может закончиться раньше, чем он начнется", Error);
             else if (!(Regex.IsMatch(NewFilmDurationHourTextBox.Text, reg2) || Regex.IsMatch(NewFilmDurationHourTextBox.Text, reg1)) ||
                      !(Regex.IsMatch(NewFilmDurationMinuteTextBox.Text, reg2) || Regex.IsMatch(NewFilmDurationMinuteTextBox.Text, reg1)) ||
                      int.Parse(NewFilmDurationMinuteTextBox.Text) > 59 ||
@@ -1024,7 +1012,7 @@ namespace Cinema
                             };
                     FilmInformationSessionDataGrid.ItemsSource = s.ToList();
                 }
-            }
+            }            
         }
 
         private void SessionSetupGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
