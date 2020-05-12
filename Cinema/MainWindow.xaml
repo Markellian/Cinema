@@ -64,7 +64,7 @@
             <Button x:Name="UsersRoleButton2" Visibility="Hidden" Content="Пользователи" HorizontalAlignment="Right" Margin="0,35,10,0" VerticalAlignment="Top" Width="87" Click="GoToUsersRoleGrid"/>
             <Button x:Name="AuthUserButton2" Visibility="Visible" IsEnabled="True" Content="Войти" HorizontalAlignment="Left" Margin="697,10,0,0" VerticalAlignment="Top" Width="87" Background="White" Click="GoToAuthButton_Click"/>
             <Button x:Name="UserButton2" Click="UserButton_Click" Content="" Visibility="Hidden" HorizontalAlignment="Right" Margin="0,10,10,0" VerticalAlignment="Top"/>
-            <DatePicker SelectedDateChanged="DatePicker_SelectedDateChanged" HorizontalAlignment="Left" Margin="180,287,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.397,0.466"/>
+            <DatePicker Name="DateSessionDataPicker" SelectedDateChanged="DatePicker_SelectedDateChanged" HorizontalAlignment="Left" Margin="180,287,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.397,0.466"/>
         </Grid>
 
         <Grid x:Name="PlacesGrid" Visibility="Hidden" Margin="0,0,-0.4,0" Background="Black">

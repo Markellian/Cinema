@@ -129,7 +129,8 @@ namespace Cinema
                 }
             }
             ListPosterGrid.Visibility = Visibility.Hidden;
-            FilmInformationGrid.Visibility = Visibility.Visible;          
+            FilmInformationGrid.Visibility = Visibility.Visible;
+            DatePicker_SelectedDateChanged(DateSessionDataPicker, null);
         }
         
         /// <summary>
@@ -660,6 +661,7 @@ namespace Cinema
             else if (NewFilmDateReleaseDatePicker.SelectedDate == null) MessageBox.Show("Укажите дату релиза", Error);
             else if (NewFilmDateEndDatePicker.SelectedDate == null) MessageBox.Show("Укажите дату окончания проката", Error);
             else if (NewFilmDateReleaseDatePicker.SelectedDate > NewFilmDateEndDatePicker.SelectedDate) MessageBox.Show("Прокат фильма не может закончиться раньше, чем он начнется", Error);
+            else if (NewFilmDateEndDatePicker.SelectedDate < DateTime.Now) MessageBox.Show("Фильм уже вышел из проката", Error);
             else if (!(Regex.IsMatch(NewFilmDurationHourTextBox.Text, reg2) || Regex.IsMatch(NewFilmDurationHourTextBox.Text, reg1)) ||
                      !(Regex.IsMatch(NewFilmDurationMinuteTextBox.Text, reg2) || Regex.IsMatch(NewFilmDurationMinuteTextBox.Text, reg1)) ||
                      int.Parse(NewFilmDurationMinuteTextBox.Text) > 59 ||
@@ -684,9 +686,9 @@ namespace Cinema
                     MessageBox.Show("Фильм добавлен");
                 }
                 LoadPosters();
+                FromAddFilmToManu(null, null);
             }
-            FilmAddGrid.Visibility = Visibility.Hidden;
-            PosterGrid.Visibility = Visibility.Visible;
+            
         }
       
         private void FilmAddGrid_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -995,7 +997,7 @@ namespace Cinema
 
         private void DatePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
         {
-            DateTime? date = ((DatePicker)sender).SelectedDate;
+            DateTime? date = DateSessionDataPicker.SelectedDate;
             if (date == null) FilmInformationSessionDataGrid.ItemsSource = null;
             else
             {
@@ -1010,6 +1012,7 @@ namespace Cinema
                                 Hall = f.Halls.Hall_number,
                                 sessionId = f.Session_id
                             };
+                    FilmInformationSessionDataGrid.ItemsSource = null;
                     FilmInformationSessionDataGrid.ItemsSource = s.ToList();
                 }
             }            
@@ -1060,6 +1063,7 @@ namespace Cinema
                         db.SaveChanges();
                         MessageBox.Show("Сеанс удален");
                         LoadSessions();
+                        DatePicker_SelectedDateChanged(DateSessionDataPicker, null);
                     }
                 }
             }
